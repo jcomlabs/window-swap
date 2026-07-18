@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <style>
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          container-type: size;
+          color: #07111f;
+          font-family: Arial, sans-serif;
+        }
+
+        #root * {
+          box-sizing: border-box;
+        }
+
+        [class~="f03-build-week-extension-ground"] {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          background: #f4f7fb;
+        }
+
+        [class~="f03-build-week-extension-progress-base"] {
+          position: absolute;
+          left: 0;
+          top: 888px;
+          width: 100%;
+          height: 3px;
+          background: rgba(39, 103, 203, 0.08);
+        }
+
+        [class~="f03-build-week-extension-progress-fill"] {
+          display: block;
+          width: 100%;
+          height: 100%;
+          transform-origin: left center;
+          background: #2767cb;
+        }
+
+        [class~="f03-build-week-extension-content"] {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          padding: 70px 96px 0;
+        }
+
+        [class~="f03-build-week-extension-header"] {
+          position: relative;
+          width: 100%;
+          height: 166px;
+        }
+
+        [class~="f03-build-week-extension-accent-line"] {
+          display: block;
+          width: 60px;
+          height: 4px;
+          border-radius: 2px;
+          background: #2767cb;
+          transform-origin: left center;
+        }
+
+        [class~="f03-build-week-extension-eyebrow"] {
+          margin-top: 20px;
+          font-size: 18px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          color: #2767cb;
+        }
+
+        [class~="f03-build-week-extension-title"] {
+          margin: 13px 0 0;
+          max-width: 1380px;
+          font-size: 50px;
+          line-height: 1.06;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          color: #07111f;
+        }
+
+        [class~="f03-build-week-extension-tag"] {
+          position: absolute;
+          top: 6px;
+          right: 0;
+          padding: 10px 18px;
+          border-radius: 100px;
+          background: rgba(39, 103, 203, 0.08);
+          font-size: 14px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          color: #2767cb;
+        }
+
+        [class~="f03-build-week-extension-date-rail"] {
+          position: relative;
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          align-items: center;
+          width: 100%;
+          height: 56px;
+          margin-top: 4px;
+        }
+
+        [class~="f03-build-week-extension-rail-track"] {
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 17px;
+          height: 2px;
+          border-radius: 6px;
+          background: rgba(39, 103, 203, 0.15);
+        }
+
+        [class~="f03-build-week-extension-rail-fill"] {
+          display: block;
+          width: 100%;
+          height: 100%;
+          border-radius: 6px;
+          background: #2767cb;
+          transform-origin: left center;
+        }
+
+        [class~="f03-build-week-extension-rail-stop"] {
+          position: relative;
+          padding-top: 31px;
+          font-size: 13px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          color: #864eeb;
+        }
+
+        [class~="f03-build-week-extension-rail-stop"]::before {
+          content: "";
+          position: absolute;
+          top: 11px;
+          left: 0;
+          width: 14px;
+          height: 14px;
+          border: 3px solid #f4f7fb;
+          border-radius: 50%;
+          background: #2767cb;
+        }
+
+        [class~="f03-build-week-extension-rail-stop"]:nth-child(4) {
+          text-align: center;
+        }
+
+        [class~="f03-build-week-extension-rail-stop"]:nth-child(4)::before {
+          left: calc(50% - 7px);
+        }
+
+        [class~="f03-build-week-extension-rail-stop"]:nth-child(5) {
+          text-align: right;
+        }
+
+        [class~="f03-build-week-extension-rail-stop"]:nth-child(5)::before {
+          left: auto;
+          right: 0;
+        }
+
+        [class~="f03-build-week-extension-grid"] {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          grid-template-rows: 196px 196px;
+          gap: 24px;
+          width: 100%;
+          margin-top: 24px;
+        }
+
+        [class~="f03-build-week-extension-card"] {
+          position: relative;
+          display: grid;
+          grid-template-columns: 76px 1fr 70px;
+          align-items: center;
+          min-width: 0;
+          padding: 28px 30px;
+          overflow: hidden;
+          border: 1.5px solid rgba(39, 103, 203, 0.2);
+          border-radius: 14px;
+          background: rgba(39, 103, 203, 0.04);
+          will-change: transform, opacity;
+        }
+
+        [class~="f03-build-week-extension-card"]::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 5px;
+          height: 100%;
+          background: rgba(39, 103, 203, 0.15);
+        }
+
+        [class~="f03-build-week-extension-icon"] {
+          display: grid;
+          place-items: center;
+          width: 56px;
+          height: 56px;
+          border-radius: 50%;
+          background: #2767cb;
+          font-size: 23px;
+          line-height: 1;
+          font-weight: 700;
+          color: #f4f7fb;
+        }
+
+        [class~="f03-build-week-extension-card-copy"] {
+          min-width: 0;
+        }
+
+        [class~="f03-build-week-extension-card-kicker"] {
+          margin-bottom: 9px;
+          font-size: 14px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          color: #2767cb;
+        }
+
+        [class~="f03-build-week-extension-card-title"] {
+          font-size: 28px;
+          line-height: 1.08;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          color: #07111f;
+        }
+
+        [class~="f03-build-week-extension-check"] {
+          justify-self: end;
+          display: grid;
+          place-items: center;
+          width: 44px;
+          height: 44px;
+          border: 1.5px solid rgba(39, 103, 203, 0.2);
+          border-radius: 50%;
+          font-size: 22px;
+          font-weight: 700;
+          color: #2767cb;
+        }
+
+        [class~="f03-build-week-extension-payoff"] {
+          display: flex;
+          align-items: center;
+          gap: 22px;
+          width: 100%;
+          margin-top: 28px;
+        }
+
+        [class~="f03-build-week-extension-payoff-rule"] {
+          display: block;
+          flex: 0 0 60px;
+          width: 60px;
+          height: 4px;
+          border-radius: 2px;
+          background: #2767cb;
+          transform-origin: left center;
+        }
+
+        [class~="f03-build-week-extension-payoff-text"] {
+          font-size: 39px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          color: #07111f;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="03-build-week-extension"
+        data-width="1920"
+        data-height="1080"
+        data-duration="18.5"
+      >
+        <div
+          id="f03-build-week-extension-ground"
+          class="clip f03-build-week-extension-ground"
+          data-start="0"
+          data-duration="18.5"
+          data-track-index="0"
+        ></div>
+
+        <div
+          id="f03-build-week-extension-content"
+          class="clip f03-build-week-extension-content"
+          data-start="0"
+          data-duration="18.5"
+          data-track-index="1"
+        >
+          <header class="f03-build-week-extension-header">
+            <span id="f03-build-week-extension-accent-line" class="f03-build-week-extension-accent-line"></span>
+            <div id="f03-build-week-extension-eyebrow" class="f03-build-week-extension-eyebrow">BUILD WEEK EXTENSION</div>
+            <h1 id="f03-build-week-extension-title" class="f03-build-week-extension-title">EXTENDED DURING BUILD WEEK</h1>
+            <div id="f03-build-week-extension-tag" class="f03-build-week-extension-tag">ENGINEERING HARDENING</div>
+          </header>
+
+          <div id="f03-build-week-extension-date-rail" class="f03-build-week-extension-date-rail">
+            <div class="f03-build-week-extension-rail-track">
+              <span id="f03-build-week-extension-rail-fill" class="f03-build-week-extension-rail-fill"></span>
+            </div>
+            <div class="f03-build-week-extension-rail-stop">PROTOTYPE</div>
+            <div class="f03-build-week-extension-rail-stop">BUILD WEEK</div>
+            <div class="f03-build-week-extension-rail-stop">DAILY TOOL</div>
+          </div>
+
+          <section id="f03-build-week-extension-grid" class="f03-build-week-extension-grid" aria-label="Build Week engineering extensions">
+            <article id="f03-build-week-extension-card-coordinates" class="f03-build-week-extension-card">
+              <div class="f03-build-week-extension-icon">±</div>
+              <div class="f03-build-week-extension-card-copy">
+                <div class="f03-build-week-extension-card-kicker">MULTI-MONITOR</div>
+                <div class="f03-build-week-extension-card-title">NEGATIVE COORDINATES</div>
+              </div>
+              <div class="f03-build-week-extension-check">✓</div>
+            </article>
+
+            <article id="f03-build-week-extension-card-instance" class="f03-build-week-extension-card">
+              <div class="f03-build-week-extension-icon">1</div>
+              <div class="f03-build-week-extension-card-copy">
+                <div class="f03-build-week-extension-card-kicker">GUARDRAIL</div>
+                <div class="f03-build-week-extension-card-title">ONE INSTANCE</div>
+              </div>
+              <div class="f03-build-week-extension-check">✓</div>
+            </article>
+
+            <article id="f03-build-week-extension-card-diagnostics" class="f03-build-week-extension-card">
+              <div class="f03-build-week-extension-icon">◇</div>
+              <div class="f03-build-week-extension-card-copy">
+                <div class="f03-build-week-extension-card-kicker">PRIVACY</div>
+                <div class="f03-build-week-extension-card-title">CONSCIOUS DIAGNOSTICS</div>
+              </div>
+              <div class="f03-build-week-extension-check">✓</div>
+            </article>
+
+            <article id="f03-build-week-extension-card-release" class="f03-build-week-extension-card">
+              <div class="f03-build-week-extension-icon">↗</div>
+              <div class="f03-build-week-extension-card-copy">
+                <div class="f03-build-week-extension-card-kicker">DELIVERY</div>
+                <div class="f03-build-week-extension-card-title">RELEASE AUTOMATION</div>
+              </div>
+              <div class="f03-build-week-extension-check">✓</div>
+            </article>
+          </section>
+
+          <div id="f03-build-week-extension-payoff" class="f03-build-week-extension-payoff">
+            <span id="f03-build-week-extension-payoff-rule" class="f03-build-week-extension-payoff-rule"></span>
+            <div class="f03-build-week-extension-payoff-text">DEPENDABLE DAILY TOOL</div>
+          </div>
+        </div>
+
+        <div
+          id="f03-build-week-extension-progress"
+          class="clip f03-build-week-extension-progress-base"
+          data-start="0"
+          data-duration="18.5"
+          data-track-index="2"
+        >
+          <span id="f03-build-week-extension-progress-fill" class="f03-build-week-extension-progress-fill"></span>
+        </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+
+        tl.fromTo(
+          "[id=\"f03-build-week-extension-accent-line\"]",
+          { scaleX: 0, opacity: 0 },
+          { scaleX: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+          0.05
+        );
+        tl.fromTo(
+          "[id=\"f03-build-week-extension-eyebrow\"]",
+          { x: -26, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+          0.18
+        );
+        tl.fromTo(
+          "[id=\"f03-build-week-extension-title\"]",
+          { y: 24, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.75, ease: "power3.out" },
+          0.32
+        );
+        tl.fromTo(
+          "[id=\"f03-build-week-extension-tag\"]",
+          { x: 24, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+          0.52
+        );
+        tl.fromTo(
+          "[id=\"f03-build-week-extension-rail-fill\"]",
+          { scaleX: 0 },
+          { scaleX: 1, duration: 2.7, ease: "power2.out" },
+          0.85
+        );
+        tl.fromTo(
+          '[class~="f03-build-week-extension-rail-stop"]',
+          { y: 12, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.55, stagger: 0.42, ease: "power3.out" },
+          0.95
+        );
+
+        const cardEntrances = [
+          ["[id=\"f03-build-week-extension-card-coordinates\"]", { x: 52, y: 36 }, 4.05],
+          ["[id=\"f03-build-week-extension-card-instance\"]", { x: -52, y: 36 }, 6.65],
+          ["[id=\"f03-build-week-extension-card-diagnostics\"]", { x: 52, y: -36 }, 9.35],
+          ["[id=\"f03-build-week-extension-card-release\"]", { x: -52, y: -36 }, 12.05]
+        ];
+
+        cardEntrances.forEach(([selector, offset, at]) => {
+          tl.fromTo(
+            selector,
+            { x: offset.x, y: offset.y, scale: 0.94, opacity: 0 },
+            { x: 0, y: 0, scale: 1, opacity: 1, duration: 1.15, ease: "power3.out" },
+            at
+          );
+          tl.fromTo(
+            selector + ' [class~="f03-build-week-extension-icon"]',
+            { scale: 0.72, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.62, ease: "power3.out" },
+            at + 0.16
+          );
+          tl.fromTo(
+            selector + ' [class~="f03-build-week-extension-card-copy"]',
+            { x: 18, opacity: 0 },
+            { x: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+            at + 0.22
+          );
+          tl.fromTo(
+            selector + ' [class~="f03-build-week-extension-check"]',
+            { scale: 0.74, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.56, ease: "power3.out" },
+            at + 0.34
+          );
+        });
+
+        tl.fromTo(
+          "[id=\"f03-build-week-extension-payoff-rule\"]",
+          { scaleX: 0, opacity: 0 },
+          { scaleX: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+          14.55
+        );
+        tl.fromTo(
+          "[id=\"f03-build-week-extension-payoff\"]",
+          { y: 22, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.85, ease: "power3.out" },
+          14.68
+        );
+        tl.fromTo(
+          "[id=\"f03-build-week-extension-progress-fill\"]",
+          { scaleX: 0.34 },
+          { scaleX: 0.51, duration: 18, ease: "none" },
+          0
+        );
+
+        window.__timelines["03-build-week-extension"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

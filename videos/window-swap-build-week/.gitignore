@@ -1,0 +1,12 @@
+.venv/
+node_modules/
+renders/
+snapshots/
+snapshots-*/
+capture/review/
+capture/review-*/
+capture/*.log
+capture/*.pid
+capture/assets/*-contact.jpg
+capture/assets/window-swap-real-demo.mp4
+capture/assets/window-swap-real-demo-take2.mp4

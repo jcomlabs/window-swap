@@ -12,6 +12,10 @@ Windows taskbar and Snap layouts unchanged.
 > geometry rules are tested, but desktop behavior still varies with applications,
 > display scaling, and multi-monitor layouts.
 
+The isolated OpenAI Build Week 2026 submission evidence is documented in
+[`BUILD_WEEK.md`](BUILD_WEEK.md). It clearly separates the earlier prototype from
+the work completed during the submission period.
+
 ## Features
 
 - cycles through visible top-level windows occupying the same screen region;

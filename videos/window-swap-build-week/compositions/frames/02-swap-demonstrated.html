@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+  </head>
+  <body>
+    <template>
+      <style>
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          container-type: size;
+          color: #07111f;
+          font-family: sans-serif;
+        }
+
+        .f02-ground {
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(circle at 50% 43%, rgba(39, 103, 203, 0.08), transparent 43%),
+            #f4f7fb;
+        }
+
+        .f02-stage {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        .f02-header {
+          position: absolute;
+          left: 96px;
+          top: 28px;
+          width: 1728px;
+          height: 82px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 40px;
+        }
+
+        .f02-title {
+          display: block;
+          font-size: 34px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          color: #07111f;
+        }
+
+        .f02-instruction {
+          display: block;
+          padding: 14px 24px;
+          border: 1.5px solid rgba(39, 103, 203, 0.2);
+          border-radius: 100px;
+          background: rgba(39, 103, 203, 0.08);
+          font-size: 27px;
+          line-height: 1;
+          font-weight: 400;
+          color: #2767cb;
+          white-space: nowrap;
+        }
+
+        .f02-video-well {
+          position: absolute;
+          left: 278px;
+          top: 126px;
+          width: 1364px;
+          height: 769px;
+          border: 1.5px solid rgba(39, 103, 203, 0.2);
+          border-radius: 14px;
+          background:
+            linear-gradient(rgba(39, 103, 203, 0.04), rgba(39, 103, 203, 0.04)),
+            #f4f7fb;
+          overflow: hidden;
+        }
+
+        .f02-video-well::before,
+        .f02-video-well::after {
+          content: "";
+          position: absolute;
+          width: 70px;
+          height: 70px;
+          pointer-events: none;
+        }
+
+        .f02-video-well::before {
+          left: 18px;
+          top: 18px;
+          border-left: 4px solid #2767cb;
+          border-top: 4px solid #2767cb;
+          border-radius: 10px 0 0 0;
+        }
+
+        .f02-video-well::after {
+          right: 18px;
+          bottom: 18px;
+          border-right: 4px solid #2767cb;
+          border-bottom: 4px solid #2767cb;
+          border-radius: 0 0 10px 0;
+        }
+
+        .f02-cue {
+          position: absolute;
+          width: 174px;
+          height: 58px;
+          display: grid;
+          place-items: center;
+          border: 1.5px solid rgba(39, 103, 203, 0.2);
+          border-radius: 100px;
+          background: #f4f7fb;
+          color: #2767cb;
+          font-size: 28px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          isolation: isolate;
+        }
+
+        .f02-cue::before,
+        .f02-cue::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border: 1.5px solid rgba(39, 103, 203, 0.2);
+          border-radius: 100px;
+          background: rgba(39, 103, 203, 0.08);
+          pointer-events: none;
+          z-index: -1;
+        }
+
+        .f02-cue::before {
+          left: 4px;
+          top: 4px;
+        }
+
+        .f02-cue::after {
+          left: 8px;
+          top: 8px;
+          opacity: 0.55;
+        }
+
+        .f02-corner {
+          left: 84px;
+          top: 252px;
+        }
+
+        .f02-swap {
+          left: 1660px;
+          top: 402px;
+        }
+
+        .f02-state {
+          left: 1660px;
+          top: 526px;
+        }
+
+        .f02-final-card {
+          position: absolute;
+          left: 1652px;
+          top: 660px;
+          width: 224px;
+          min-height: 166px;
+          padding: 24px 20px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 12px;
+          border: 1.5px solid rgba(39, 103, 203, 0.2);
+          border-left: 4px solid #2767cb;
+          border-radius: 12px;
+          background: rgba(39, 103, 203, 0.08);
+        }
+
+        .f02-final-line {
+          display: block;
+          font-size: 30px;
+          line-height: 1.05;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          color: #07111f;
+        }
+
+        .f02-final-dot {
+          display: block;
+          width: 48px;
+          height: 4px;
+          border-radius: 6px;
+          background: #2767cb;
+        }
+
+        .f02-progress-track {
+          position: absolute;
+          left: 96px;
+          top: 896px;
+          width: 1728px;
+          height: 4px;
+          border-radius: 6px;
+          background: rgba(39, 103, 203, 0.08);
+          overflow: hidden;
+        }
+
+        .f02-progress-fill {
+          display: block;
+          width: 100%;
+          height: 100%;
+          border-radius: 6px;
+          background: #2767cb;
+          transform-origin: 0 50%;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="02-swap-demonstrated"
+        data-width="1920"
+        data-height="1080"
+        data-duration="20.5"
+      >
+        <div id="f02-ground" class="clip f02-ground" data-start="0" data-duration="20.5" data-track-index="0"></div>
+
+        <div id="f02-stage" class="clip f02-stage" data-start="0" data-duration="20.5" data-track-index="1">
+          <div class="f02-header">
+            <div class="f02-title">THE REAL INTERACTION</div>
+            <div class="f02-instruction">Corner → Swap → next window</div>
+          </div>
+
+          <div class="f02-video-well"></div>
+
+          <div class="f02-cue f02-corner">CORNER</div>
+          <div class="f02-cue f02-swap">SWAP</div>
+          <div class="f02-cue f02-state">B → A</div>
+
+          <div class="f02-final-card">
+            <span class="f02-final-line">same region</span>
+            <span class="f02-final-dot"></span>
+            <span class="f02-final-line">next window</span>
+          </div>
+
+          <div class="f02-progress-track">
+            <span class="f02-progress-fill"></span>
+          </div>
+        </div>
+
+        <!-- approved frame video hoisted by assemble-index -->
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const tl = gsap.timeline({ paused: true });
+
+        tl.fromTo(
+          ".f02-video-well",
+          { opacity: 0, y: 24 },
+          { opacity: 1, y: 0, duration: 0.72, ease: "power3.out" },
+          0.02,
+        );
+        tl.fromTo(
+          ".f02-title",
+          { opacity: 0, y: 18 },
+          { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+          0.15,
+        );
+        tl.fromTo(
+          ".f02-instruction",
+          { opacity: 0, x: 28 },
+          { opacity: 1, x: 0, duration: 0.72, ease: "power3.out" },
+          0.82,
+        );
+
+        tl.fromTo(
+          ".f02-corner",
+          { opacity: 0, x: -54, scale: 0.94 },
+          { opacity: 1, x: 0, scale: 1, duration: 0.62, ease: "power4.out" },
+          4.05,
+        );
+        tl.fromTo(
+          ".f02-swap",
+          { opacity: 0, x: 54, scale: 0.94 },
+          { opacity: 1, x: 0, scale: 1, duration: 0.62, ease: "power4.out" },
+          6.65,
+        );
+        tl.fromTo(
+          ".f02-state",
+          { opacity: 0, x: 54, scale: 0.94 },
+          { opacity: 1, x: 0, scale: 1, duration: 0.62, ease: "power4.out" },
+          10.05,
+        );
+
+        tl.fromTo(
+          ".f02-final-card",
+          { opacity: 0, x: 36, scale: 1.08 },
+          { opacity: 1, x: 0, scale: 1, duration: 0.72, ease: "expo.out" },
+          15.55,
+        );
+        tl.fromTo(
+          ".f02-final-dot",
+          { opacity: 0, scaleX: 0 },
+          { opacity: 1, scaleX: 1, duration: 0.52, ease: "power3.out" },
+          16.05,
+        );
+
+        tl.fromTo(
+          ".f02-progress-fill",
+          { scaleX: 0 },
+          { scaleX: 1, duration: 20, ease: "none" },
+          0,
+        );
+
+        window.__timelines["02-swap-demonstrated"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

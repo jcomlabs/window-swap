@@ -1,0 +1,19 @@
+Window Swap
+Two windows. One screen region.
+Move to the corner. Select Swap. Keep your spatial context.
+Workspace A
+Workspace B
+Right half
+Bottom-right
+Swap
+
+Build Week extension facts verified in the repository:
+- Correct popup placement on negative-coordinate monitors
+- Duplicate-instance prevention
+- Privacy-conscious diagnostics
+- Fifteen automated tests
+- GitHub Actions build and release workflows
+- Public Windows alpha release
+
+Repository: github.com/jcomlabs/window-swap
+Release: v1.1.0-alpha.1

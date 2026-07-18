@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" integrity="sha384-sG0Hv1tP1lZCk9KQmrIbY/XNwi+OY84GQqhMscbnsoBFqAz8KNCil1kvfL3Hbbk2" crossorigin="anonymous"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #000;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #f4f7fb;
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="98"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div
+        id="el-01-keep-the-region"
+        class="scene"
+        data-composition-id="01-keep-the-region"
+        data-composition-src="compositions/frames/01-keep-the-region.html"
+        data-start="0"
+        data-duration="12.4"
+        data-track-index="0"
+      ></div>
+      <audio
+        id="el-01-keep-the-region-voice"
+        src="assets/voice/01.wav"
+        data-start="0"
+        data-duration="6.784"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-02-swap-demonstrated"
+        class="scene"
+        data-composition-id="02-swap-demonstrated"
+        data-composition-src="compositions/frames/02-swap-demonstrated.html"
+        data-start="12"
+        data-duration="20.5"
+        data-track-index="1"
+      ></div>
+      <audio
+        id="el-02-swap-demonstrated-voice"
+        src="assets/voice/02.wav"
+        data-start="12"
+        data-duration="9.131"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-03-build-week-extension"
+        class="scene"
+        data-composition-id="03-build-week-extension"
+        data-composition-src="compositions/frames/03-build-week-extension.html"
+        data-start="32"
+        data-duration="18.5"
+        data-track-index="0"
+      ></div>
+      <audio
+        id="el-03-build-week-extension-voice"
+        src="assets/voice/03.wav"
+        data-start="32"
+        data-duration="14.677"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-04-codex-collaboration"
+        class="scene"
+        data-composition-id="04-codex-collaboration"
+        data-composition-src="compositions/frames/04-codex-collaboration.html"
+        data-start="50"
+        data-duration="18.4"
+        data-track-index="1"
+      ></div>
+      <audio
+        id="el-04-codex-collaboration-voice"
+        src="assets/voice/04.wav"
+        data-start="50"
+        data-duration="17.536"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-05-proof"
+        class="scene"
+        data-composition-id="05-proof"
+        data-composition-src="compositions/frames/05-proof.html"
+        data-start="68"
+        data-duration="18.5"
+        data-track-index="0"
+      ></div>
+      <audio
+        id="el-05-proof-voice"
+        src="assets/voice/05.wav"
+        data-start="68"
+        data-duration="14.613"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <div
+        id="el-06-download"
+        class="scene"
+        data-composition-id="06-download"
+        data-composition-src="compositions/frames/06-download.html"
+        data-start="86"
+        data-duration="12"
+        data-track-index="1"
+      ></div>
+      <audio
+        id="el-06-download-voice"
+        src="assets/voice/06.wav"
+        data-start="86"
+        data-duration="7.019"
+        data-track-index="10"
+        data-volume="1"
+      ></audio>
+
+      <video id="f02-demo-video" src="assets/window-swap-real-demo-final.mp4" preload="auto" aria-label="Privacy-safe Window Swap demonstration" muted playsinline
+        class="clip"
+        style="position:absolute;left:278px;top:126px;width:1364px;height:769px;object-fit:cover"
+        data-start="15.5"
+        data-duration="12"
+        data-track-index="2000"
+      ></video>
+
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+      // ── frame transitions (injected by transitions.mjs) ──
+      (function () { var tl = window.__timelines["main"];
+        tl.to("#el-01-keep-the-region", { scale: 2.5, opacity: 0, filter: "blur(8px)", duration: 0.4, ease: "power3.in" }, 12);
+        tl.fromTo("#el-02-swap-demonstrated", { scale: 0.5, opacity: 0, filter: "blur(8px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, 12);
+        tl.to("#el-02-swap-demonstrated", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 32);
+        tl.fromTo("#el-03-build-week-extension", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 32);
+        tl.to("#el-03-build-week-extension", { x: -1920, duration: 0.5, ease: "power3.inOut" }, 50);
+        tl.fromTo("#el-04-codex-collaboration", { x: 1920, opacity: 1 }, { x: 0, duration: 0.5, ease: "power3.inOut" }, 50);
+        tl.to("#el-04-codex-collaboration", { scaleX: 0, transformOrigin: "left center", duration: 0.4, ease: "power3.inOut" }, 68);
+        tl.fromTo("#el-05-proof", { scaleX: 0, transformOrigin: "right center", opacity: 1 }, { scaleX: 1, transformOrigin: "right center", duration: 0.4, ease: "power3.inOut" }, 68);
+        tl.to("#el-05-proof", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 86);
+        tl.fromTo("#el-06-download", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 86);
+        tl.to({}, { duration: 98 }, 0); // full-span anchor — main.duration() == composition total (Studio master duration)
+      })();
+    </script>
+  </body>
+</html>

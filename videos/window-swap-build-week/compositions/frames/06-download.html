@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <style>
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          container-type: size;
+          color: #07111f;
+          font-family: sans-serif;
+        }
+
+        #root * {
+          box-sizing: border-box;
+        }
+
+        [class~="f06-download-ground"] {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          background: #f4f7fb;
+        }
+
+        [class~="f06-download-atmosphere"] {
+          position: absolute;
+          inset: 0 0 180px;
+          overflow: hidden;
+        }
+
+        [class~="f06-download-ring"] {
+          position: absolute;
+          left: 960px;
+          top: 400px;
+          border: 1.5px solid rgba(39, 103, 203, 0.15);
+          border-radius: 50%;
+          pointer-events: none;
+          transform-origin: 50% 50%;
+        }
+
+        [class~="f06-download-ring-a"] {
+          width: 930px;
+          height: 930px;
+          margin: -465px 0 0 -465px;
+        }
+
+        [class~="f06-download-ring-b"] {
+          width: 700px;
+          height: 700px;
+          margin: -350px 0 0 -350px;
+        }
+
+        [class~="f06-download-ring-c"] {
+          width: 480px;
+          height: 480px;
+          margin: -240px 0 0 -240px;
+          border-color: rgba(39, 103, 203, 0.2);
+        }
+
+        [class~="f06-download-content"] {
+          position: absolute;
+          inset: 0 0 180px;
+          overflow: hidden;
+        }
+
+        [class~="f06-download-swap-wrap"] {
+          position: absolute;
+          left: 635px;
+          top: 325px;
+          width: 650px;
+          height: 150px;
+        }
+
+        [class~="f06-download-state"] {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        [class~="f06-download-lockup"] {
+          z-index: 1;
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        [class~="f06-download-brand-line"] {
+          display: flex;
+          align-items: center;
+          gap: 25px;
+        }
+
+        [class~="f06-download-mark"] {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 6px;
+          width: 74px;
+          height: 74px;
+          padding: 9px;
+          border: 4px solid #2767cb;
+          border-radius: 14px;
+          transform-origin: 50% 50%;
+          will-change: transform;
+        }
+
+        [class~="f06-download-mark-pane"] {
+          display: block;
+          width: 100%;
+          height: 100%;
+          border-radius: 4px;
+          background: #2767cb;
+        }
+
+        [class~="f06-download-wordmark"] {
+          font-size: 77px;
+          line-height: 0.95;
+          font-weight: 700;
+          letter-spacing: -0.035em;
+          color: #07111f;
+          white-space: nowrap;
+        }
+
+        [class~="f06-download-tagline"] {
+          font-size: 30px;
+          line-height: 1;
+          font-weight: 400;
+          letter-spacing: -0.02em;
+          color: #864eeb;
+          white-space: nowrap;
+        }
+
+        [class~="f06-download-cta"] {
+          z-index: 2;
+          border: 0;
+          border-radius: 100px;
+          background: #2767cb;
+          color: #f4f7fb;
+          font: inherit;
+          font-size: 48px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          pointer-events: none;
+        }
+
+        [class~="f06-download-cursor"] {
+          position: absolute;
+          left: 0;
+          top: 0;
+          z-index: 8;
+          width: 74px;
+          height: 74px;
+          pointer-events: none;
+          transform-origin: 0 0;
+          will-change: transform, opacity;
+        }
+
+        [class~="f06-download-ripple"] {
+          position: absolute;
+          z-index: 3;
+          left: 1055px;
+          top: 369px;
+          width: 110px;
+          height: 110px;
+          border: 3px solid rgba(39, 103, 203, 0.34);
+          border-radius: 50%;
+          opacity: 0;
+          pointer-events: none;
+          transform-origin: 50% 50%;
+          will-change: transform, opacity;
+        }
+
+        [class~="f06-download-repository"] {
+          position: absolute;
+          left: 360px;
+          top: 786px;
+          width: 1200px;
+          text-align: center;
+          font-size: 32px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: 0.015em;
+          color: #07111f;
+          white-space: nowrap;
+        }
+
+        [class~="f06-download-repository-accent"] {
+          color: #2767cb;
+        }
+
+        [class~="f06-download-progress"] {
+          position: absolute;
+          left: 96px;
+          top: 888px;
+          width: 1728px;
+          height: 3px;
+          overflow: hidden;
+          background: rgba(39, 103, 203, 0.08);
+        }
+
+        [class~="f06-download-progress-fill"] {
+          display: block;
+          width: 100%;
+          height: 100%;
+          background: #2767cb;
+          transform-origin: 0 50%;
+          will-change: transform;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="06-download"
+        data-width="1920"
+        data-height="1080"
+        data-duration="12"
+      >
+        <div
+          id="f06-download-ground"
+          class="clip f06-download-ground"
+          data-start="0"
+          data-duration="12"
+          data-track-index="0"
+        ></div>
+
+        <div
+          id="f06-download-atmosphere"
+          class="clip f06-download-atmosphere"
+          data-start="0"
+          data-duration="12"
+          data-track-index="1"
+        >
+          <div id="f06-download-ring-a" class="f06-download-ring f06-download-ring-a" data-layout-allow-overflow></div>
+          <div id="f06-download-ring-b" class="f06-download-ring f06-download-ring-b"></div>
+          <div id="f06-download-ring-c" class="f06-download-ring f06-download-ring-c"></div>
+        </div>
+
+        <div
+          id="f06-download-content"
+          class="clip f06-download-content"
+          data-start="0"
+          data-duration="12"
+          data-track-index="2"
+        >
+          <div class="f06-download-swap-wrap">
+            <div id="f06-download-lockup" class="f06-download-state f06-download-lockup">
+              <div class="f06-download-brand-line">
+                <div id="f06-download-mark" class="f06-download-mark" aria-hidden="true">
+                  <span class="f06-download-mark-pane"></span>
+                  <span class="f06-download-mark-pane"></span>
+                </div>
+                <div class="f06-download-wordmark">WINDOW SWAP</div>
+              </div>
+              <div id="f06-download-tagline" class="f06-download-tagline">Keep the place. Change the window.</div>
+            </div>
+
+            <button id="f06-download-cta" class="f06-download-state f06-download-cta" type="button" tabindex="-1">
+              DOWNLOAD ALPHA
+            </button>
+          </div>
+
+          <div id="f06-download-ripple-a" class="f06-download-ripple"></div>
+          <div id="f06-download-ripple-b" class="f06-download-ripple"></div>
+
+          <svg
+            id="f06-download-cursor"
+            class="f06-download-cursor"
+            viewBox="0 0 74 74"
+            aria-hidden="true"
+          >
+            <path
+              d="M6 4 L64 37 L37 42 L25 68 Z"
+              fill="#f4f7fb"
+              stroke="#07111f"
+              stroke-width="4"
+              stroke-linejoin="round"
+            />
+          </svg>
+
+          <div id="f06-download-repository" class="f06-download-repository">
+            <span class="f06-download-repository-accent">github.com/jcomlabs/</span>window-swap
+          </div>
+        </div>
+
+        <div
+          id="f06-download-progress"
+          class="clip f06-download-progress"
+          data-start="0"
+          data-duration="12"
+          data-track-index="3"
+        >
+          <span id="f06-download-progress-fill" class="f06-download-progress-fill"></span>
+        </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+
+        const lockup = document.getElementById("f06-download-lockup");
+        const mark = document.getElementById("f06-download-mark");
+        const tagline = document.getElementById("f06-download-tagline");
+        const cta = document.getElementById("f06-download-cta");
+        const cursor = document.getElementById("f06-download-cursor");
+        const repository = document.getElementById("f06-download-repository");
+        const progress = document.getElementById("f06-download-progress-fill");
+        const rings = [
+          document.getElementById("f06-download-ring-a"),
+          document.getElementById("f06-download-ring-b"),
+          document.getElementById("f06-download-ring-c")
+        ];
+        const ripples = [
+          document.getElementById("f06-download-ripple-a"),
+          document.getElementById("f06-download-ripple-b")
+        ];
+
+        tl.fromTo(
+          lockup,
+          { opacity: 0, scale: 0.94 },
+          { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+          0.02
+        );
+        tl.fromTo(
+          tagline,
+          { opacity: 0, y: 18 },
+          { opacity: 1, y: 0, duration: 0.65, ease: "power3.out" },
+          0.48
+        );
+        tl.fromTo(
+          rings,
+          { opacity: 0, scale: 0.88 },
+          { opacity: 1, scale: 1, duration: 1.1, stagger: 0.12, ease: "power2.out" },
+          0.08
+        );
+
+        const breath = { p: 0 };
+        tl.to(
+          breath,
+          {
+            p: Math.PI * 2,
+            duration: 2.15,
+            ease: "none",
+            onUpdate: () => {
+              mark.style.transform = `rotate(${Math.sin(breath.p) * 0.55}deg)`;
+            }
+          },
+          1.2
+        );
+
+        tl.fromTo(cta, { opacity: 0, scale: 0.72 }, { opacity: 0, scale: 0.72, duration: 0.01 }, 0);
+        tl.to(lockup, { opacity: 0, scale: 0.72, duration: 0.45, ease: "power2.in" }, 3.5);
+        tl.fromTo(
+          cta,
+          { opacity: 0, scale: 0.72 },
+          { opacity: 1, scale: 1, duration: 0.62, ease: "back.out(1.55)" },
+          3.78
+        );
+
+        tl.fromTo(
+          cursor,
+          { opacity: 0, x: 1840, y: 730 },
+          { opacity: 1, x: 1110, y: 424, duration: 1.45, ease: "power3.out" },
+          7.0
+        );
+        tl.to([cta, cursor], { scale: 0.94, duration: 0.16, ease: "power1.in" }, 8.58);
+        tl.to([cta, cursor], { scale: 1, duration: 0.52, ease: "back.out(1.7)" }, 8.78);
+
+        ripples.forEach((ripple, index) => {
+          tl.fromTo(
+            ripple,
+            { opacity: 0.32, scale: 0.18 },
+            {
+              opacity: 0,
+              scale: 4.1,
+              duration: 0.78,
+              ease: "power2.out",
+              immediateRender: false
+            },
+            8.62 + index * 0.09
+          );
+        });
+
+        tl.fromTo(
+          repository,
+          { opacity: 0, y: 18 },
+          { opacity: 1, y: 0, duration: 0.65, ease: "power3.out" },
+          10.0
+        );
+        tl.fromTo(progress, { scaleX: 0.84 }, { scaleX: 1, duration: 12, ease: "none" }, 0);
+
+        window.__timelines["06-download"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

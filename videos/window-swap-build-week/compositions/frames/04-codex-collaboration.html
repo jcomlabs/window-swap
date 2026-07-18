@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <style>
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          container-type: size;
+          color: #07111f;
+          font-family: Arial, sans-serif;
+        }
+
+        #root * {
+          box-sizing: border-box;
+        }
+
+        [class~="f04-codex-collaboration-ground"] {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          background: #f4f7fb;
+        }
+
+        [class~="f04-codex-collaboration-progress"] {
+          position: absolute;
+          left: 0;
+          top: 888px;
+          width: 100%;
+          height: 3px;
+          background: rgba(39, 103, 203, 0.08);
+        }
+
+        [class~="f04-codex-collaboration-progress-fill"] {
+          display: block;
+          width: 100%;
+          height: 100%;
+          transform-origin: left center;
+          background: #2767cb;
+        }
+
+        [class~="f04-codex-collaboration-content"] {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          padding: 68px 96px 0;
+        }
+
+        [class~="f04-codex-collaboration-header"] {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          height: 72px;
+        }
+
+        [class~="f04-codex-collaboration-eyebrow"] {
+          display: flex;
+          align-items: center;
+          gap: 18px;
+          font-size: 18px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          color: #2767cb;
+        }
+
+        [class~="f04-codex-collaboration-accent-line"] {
+          display: block;
+          width: 60px;
+          height: 4px;
+          border-radius: 2px;
+          transform-origin: left center;
+          background: #2767cb;
+        }
+
+        [class~="f04-codex-collaboration-tag"] {
+          padding: 10px 18px;
+          border-radius: 100px;
+          background: rgba(39, 103, 203, 0.08);
+          font-size: 14px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          color: #2767cb;
+        }
+
+        [class~="f04-codex-collaboration-columns"] {
+          display: grid;
+          grid-template-columns: 40fr 60fr;
+          gap: 54px;
+          width: 100%;
+          height: 620px;
+          margin-top: 26px;
+        }
+
+        [class~="f04-codex-collaboration-column-label"] {
+          margin-bottom: 18px;
+          font-size: 17px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          color: #2767cb;
+        }
+
+        [class~="f04-codex-collaboration-human-card"] {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          width: 100%;
+          height: 535px;
+          padding: 42px 42px 38px;
+          overflow: hidden;
+          border: 1.5px solid rgba(39, 103, 203, 0.2);
+          border-radius: 14px;
+          background: rgba(39, 103, 203, 0.04);
+        }
+
+        [class~="f04-codex-collaboration-human-card"]::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 6px;
+          height: 100%;
+          background: #2767cb;
+        }
+
+        [class~="f04-codex-collaboration-human-index"] {
+          display: grid;
+          place-items: center;
+          width: 56px;
+          height: 56px;
+          border-radius: 50%;
+          background: #2767cb;
+          font-size: 22px;
+          line-height: 1;
+          font-weight: 700;
+          color: #f4f7fb;
+        }
+
+        [class~="f04-codex-collaboration-human-copy"] {
+          max-width: 570px;
+          font-size: 52px;
+          line-height: 1.06;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          color: #07111f;
+        }
+
+        [class~="f04-codex-collaboration-human-rule"] {
+          display: block;
+          width: 60px;
+          height: 4px;
+          margin-bottom: 20px;
+          border-radius: 2px;
+          background: #2767cb;
+        }
+
+        [class~="f04-codex-collaboration-human-meta"] {
+          font-size: 17px;
+          line-height: 1.35;
+          font-weight: 700;
+          letter-spacing: 0.06em;
+          color: #864eeb;
+        }
+
+        [class~="f04-codex-collaboration-execution"] {
+          min-width: 0;
+        }
+
+        [class~="f04-codex-collaboration-rail"] {
+          position: relative;
+          width: 100%;
+          height: 535px;
+          padding: 18px 0 8px 82px;
+          border: 1.5px solid rgba(39, 103, 203, 0.2);
+          border-radius: 14px;
+          background: rgba(39, 103, 203, 0.04);
+        }
+
+        [class~="f04-codex-collaboration-rail-svg"] {
+          position: absolute;
+          top: 45px;
+          left: 33px;
+          width: 64px;
+          height: 426px;
+          overflow: visible;
+        }
+
+        [class~="f04-codex-collaboration-rail-path"] {
+          fill: none;
+          stroke: #2767cb;
+          stroke-width: 4;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        [class~="f04-codex-collaboration-rail-items"] {
+          display: grid;
+          grid-template-rows: repeat(5, 1fr);
+          width: 100%;
+          height: 100%;
+        }
+
+        [class~="f04-codex-collaboration-rail-item"] {
+          position: relative;
+          display: flex;
+          align-items: center;
+          min-width: 0;
+          padding: 0 30px 0 22px;
+          border-bottom: 1px solid rgba(39, 103, 203, 0.15);
+        }
+
+        [class~="f04-codex-collaboration-rail-item"]:last-child {
+          border-bottom: 0;
+        }
+
+        [class~="f04-codex-collaboration-node"] {
+          position: absolute;
+          left: -60px;
+          display: grid;
+          place-items: center;
+          width: 30px;
+          height: 30px;
+          border: 4px solid #f4f7fb;
+          border-radius: 50%;
+          background: #2767cb;
+          font-size: 11px;
+          line-height: 1;
+          font-weight: 700;
+          color: #f4f7fb;
+        }
+
+        [class~="f04-codex-collaboration-keyword"] {
+          display: inline-block;
+          transform-origin: 0 50%;
+          font-size: 29px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          color: #07111f;
+          text-shadow: 0 0 0 rgba(39, 103, 203, 0);
+          will-change: transform, text-shadow;
+        }
+
+        [class~="f04-codex-collaboration-owner"] {
+          margin-left: auto;
+          font-size: 12px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: 0.07em;
+          color: #864eeb;
+        }
+
+        [class~="f04-codex-collaboration-resolution"] {
+          position: absolute;
+          left: 96px;
+          top: 795px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 1728px;
+          height: 72px;
+          padding: 0 28px 0 32px;
+          border: 1.5px solid rgba(39, 103, 203, 0.2);
+          border-radius: 14px;
+          background: rgba(39, 103, 203, 0.04);
+        }
+
+        [class~="f04-codex-collaboration-resolution-steps"] {
+          display: flex;
+          align-items: center;
+          gap: 24px;
+          font-size: 30px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          color: #07111f;
+        }
+
+        [class~="f04-codex-collaboration-arrow"] {
+          color: #2767cb;
+        }
+
+        [class~="f04-codex-collaboration-verification"] {
+          max-width: 700px;
+          text-align: right;
+          font-size: 13px;
+          line-height: 1.25;
+          font-weight: 700;
+          letter-spacing: 0.055em;
+          color: #864eeb;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="04-codex-collaboration"
+        data-width="1920"
+        data-height="1080"
+        data-duration="18.4"
+      >
+        <div
+          id="f04-codex-collaboration-ground"
+          class="clip f04-codex-collaboration-ground"
+          data-start="0"
+          data-duration="18.4"
+          data-track-index="0"
+        ></div>
+
+        <main
+          id="f04-codex-collaboration-content"
+          class="clip f04-codex-collaboration-content"
+          data-start="0"
+          data-duration="18.4"
+          data-track-index="1"
+        >
+          <header class="f04-codex-collaboration-header">
+            <div id="f04-codex-collaboration-eyebrow" class="f04-codex-collaboration-eyebrow">
+              <span id="f04-codex-collaboration-accent-line" class="f04-codex-collaboration-accent-line"></span>
+              COLLABORATION MODEL
+            </div>
+            <div id="f04-codex-collaboration-tag" class="f04-codex-collaboration-tag">PROCESS TRANSPARENCY</div>
+          </header>
+
+          <section class="f04-codex-collaboration-columns" aria-label="Human and Codex collaboration roles">
+            <article id="f04-codex-collaboration-human" class="f04-codex-collaboration-human">
+              <div class="f04-codex-collaboration-column-label">HUMAN DIRECTION</div>
+              <div class="f04-codex-collaboration-human-card">
+                <div class="f04-codex-collaboration-human-index">01</div>
+                <div class="f04-codex-collaboration-human-copy">PRODUCT DECISIONS</div>
+                <div>
+                  <span class="f04-codex-collaboration-human-rule"></span>
+                  <div class="f04-codex-collaboration-human-meta">SCOPE · PRIVACY · RELEASE AUTHORITY</div>
+                </div>
+              </div>
+            </article>
+
+            <article id="f04-codex-collaboration-execution" class="f04-codex-collaboration-execution">
+              <div class="f04-codex-collaboration-column-label">CODEX EXECUTION</div>
+              <div class="f04-codex-collaboration-rail">
+                <svg class="f04-codex-collaboration-rail-svg" viewBox="0 0 64 426" aria-hidden="true">
+                  <path
+                    id="f04-codex-collaboration-rail-path"
+                    class="f04-codex-collaboration-rail-path"
+                    d="M32 10 C32 54 32 77 32 104 C32 132 32 163 32 210 C32 257 32 288 32 318 C32 350 32 378 32 416"
+                  />
+                </svg>
+
+                <div class="f04-codex-collaboration-rail-items">
+                  <div id="f04-codex-collaboration-item-privacy" class="f04-codex-collaboration-rail-item">
+                    <span class="f04-codex-collaboration-node">01</span>
+                    <span class="f04-codex-collaboration-keyword" data-word="privacy">PRIVACY BOUNDARY</span>
+                    <span class="f04-codex-collaboration-owner">HUMAN</span>
+                  </div>
+                  <div id="f04-codex-collaboration-item-audit" class="f04-codex-collaboration-rail-item">
+                    <span class="f04-codex-collaboration-node">02</span>
+                    <span class="f04-codex-collaboration-keyword" data-word="audit">AUDIT</span>
+                    <span class="f04-codex-collaboration-owner">CODEX</span>
+                  </div>
+                  <div id="f04-codex-collaboration-item-implement" class="f04-codex-collaboration-rail-item">
+                    <span class="f04-codex-collaboration-node">03</span>
+                    <span class="f04-codex-collaboration-keyword" data-word="implement">IMPLEMENT</span>
+                    <span class="f04-codex-collaboration-owner">CODEX</span>
+                  </div>
+                  <div id="f04-codex-collaboration-item-test" class="f04-codex-collaboration-rail-item">
+                    <span class="f04-codex-collaboration-node">04</span>
+                    <span class="f04-codex-collaboration-keyword" data-word="test">WINDOWS TEST</span>
+                    <span class="f04-codex-collaboration-owner">CODEX</span>
+                  </div>
+                  <div id="f04-codex-collaboration-item-release" class="f04-codex-collaboration-rail-item">
+                    <span class="f04-codex-collaboration-node">05</span>
+                    <span class="f04-codex-collaboration-keyword" data-word="release">PUBLIC RELEASE</span>
+                    <span class="f04-codex-collaboration-owner">PREPARED</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </section>
+        </main>
+
+        <div
+          id="f04-codex-collaboration-resolution"
+          class="clip f04-codex-collaboration-resolution"
+          data-start="0"
+          data-duration="18.4"
+          data-track-index="2"
+        >
+          <div class="f04-codex-collaboration-resolution-steps">
+            <span>DECIDE</span><span class="f04-codex-collaboration-arrow">→</span>
+            <span>BUILD</span><span class="f04-codex-collaboration-arrow">→</span>
+            <span>VERIFY</span>
+          </div>
+          <div class="f04-codex-collaboration-verification">GPT-5.6 · OWNER VERIFICATION REQUIRED BEFORE UPLOAD</div>
+        </div>
+
+        <div
+          id="f04-codex-collaboration-progress"
+          class="clip f04-codex-collaboration-progress"
+          data-start="0"
+          data-duration="18.4"
+          data-track-index="3"
+        >
+          <span id="f04-codex-collaboration-progress-fill" class="f04-codex-collaboration-progress-fill"></span>
+        </div>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+
+        const railPath = document.querySelector('[id="f04-codex-collaboration-rail-path"]');
+        const railLength = railPath.getTotalLength();
+        railPath.style.strokeDasharray = `${railLength}`;
+        railPath.style.strokeDashoffset = `${railLength}`;
+
+        tl.fromTo(
+          '[id="f04-codex-collaboration-accent-line"]',
+          { scaleX: 0, opacity: 0 },
+          { scaleX: 1, opacity: 1, duration: 0.42, ease: "power3.out" },
+          0.04
+        );
+        tl.fromTo(
+          '[id="f04-codex-collaboration-eyebrow"]',
+          { x: -24, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.58, ease: "power3.out" },
+          0.12
+        );
+        tl.fromTo(
+          '[id="f04-codex-collaboration-tag"]',
+          { x: 24, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.62, ease: "power3.out" },
+          0.28
+        );
+        tl.fromTo(
+          '[id="f04-codex-collaboration-human"]',
+          { x: -58, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.86, ease: "power3.out" },
+          0.2
+        );
+        tl.fromTo(
+          '[id="f04-codex-collaboration-execution"]',
+          { x: 58, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.9, ease: "power3.out" },
+          0.38
+        );
+
+        tl.fromTo(
+          '[id="f04-codex-collaboration-rail-path"]',
+          { strokeDashoffset: railLength },
+          { strokeDashoffset: 0, duration: 9.65, ease: "power2.out" },
+          4.1
+        );
+
+        const itemEntrances = [
+          ['[id="f04-codex-collaboration-item-privacy"]', 4.05],
+          ['[id="f04-codex-collaboration-item-audit"]', 6.05],
+          ['[id="f04-codex-collaboration-item-implement"]', 8.15],
+          ['[id="f04-codex-collaboration-item-test"]', 10.35],
+          ['[id="f04-codex-collaboration-item-release"]', 12.45]
+        ];
+
+        itemEntrances.forEach(([selector, at]) => {
+          tl.fromTo(
+            selector,
+            { x: 42, opacity: 0 },
+            { x: 0, opacity: 1, duration: 0.72, ease: "power3.out" },
+            at
+          );
+          tl.fromTo(
+            selector + ' [class~="f04-codex-collaboration-node"]',
+            { scale: 0.72, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.48, ease: "power3.out" },
+            at + 0.12
+          );
+        });
+
+        const keywordTimings = {
+          privacy: { start: 4.25, end: 5.2 },
+          audit: { start: 6.25, end: 7.05 },
+          implement: { start: 8.35, end: 9.2 },
+          test: { start: 10.55, end: 11.45 },
+          release: { start: 12.65, end: 13.7 }
+        };
+        const keywordDriver = { t: 0 };
+        const keywords = document.querySelectorAll('[class~="f04-codex-collaboration-keyword"]');
+        const attackDuration = 0.18;
+        const releaseDuration = 0.36;
+        const restLevel = 0.16;
+
+        function keywordEnvelope(time, start, end) {
+          if (time < start) return 0;
+          if (time < end) return Math.min((time - start) / attackDuration, 1);
+          if (time < end + releaseDuration) {
+            const decay = (time - end) / releaseDuration;
+            return 1 - decay * (1 - restLevel);
+          }
+          return restLevel;
+        }
+
+        tl.to(
+          keywordDriver,
+          {
+            t: 18,
+            duration: 18,
+            ease: "none",
+            onUpdate: () => {
+              keywords.forEach((keyword) => {
+                const timing = keywordTimings[keyword.dataset.word];
+                const envelope = keywordEnvelope(keywordDriver.t, timing.start, timing.end);
+                const blur = 18 * envelope;
+                const scale = 1 + 0.05 * envelope;
+                const alpha = 0.08 + 0.34 * envelope;
+                keyword.style.textShadow = `0 0 ${blur}px rgba(39, 103, 203, ${alpha})`;
+                keyword.style.transform = `scale(${scale})`;
+              });
+            }
+          },
+          0
+        );
+
+        tl.fromTo(
+          '[id="f04-codex-collaboration-resolution"]',
+          { y: 28, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.88, ease: "power3.out" },
+          14.5
+        );
+        tl.fromTo(
+          '[id="f04-codex-collaboration-resolution"] [class~="f04-codex-collaboration-resolution-steps"] span',
+          { x: 22, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.5, stagger: 0.11, ease: "power3.out" },
+          14.68
+        );
+        tl.fromTo(
+          '[id="f04-codex-collaboration-resolution"] [class~="f04-codex-collaboration-verification"]',
+          { x: 24, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.66, ease: "power3.out" },
+          15.1
+        );
+        tl.fromTo(
+          '[id="f04-codex-collaboration-progress-fill"]',
+          { scaleX: 0.51 },
+          { scaleX: 0.68, duration: 18, ease: "none" },
+          0
+        );
+
+        window.__timelines["04-codex-collaboration"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

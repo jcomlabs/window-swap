@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <template>
+      <style>
+        #root {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          container-type: size;
+          color: #07111f;
+          font-family: sans-serif;
+        }
+
+        .clip {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          box-sizing: border-box;
+        }
+
+        .f01-keep-the-region-ground {
+          background: #f4f7fb;
+        }
+
+        .f01-keep-the-region-stage {
+          position: absolute;
+          inset: 0 0 180px 0;
+          overflow: hidden;
+        }
+
+        .f01-keep-the-region-copy {
+          position: absolute;
+          left: 96px;
+          top: 132px;
+          width: 1160px;
+          height: 650px;
+        }
+
+        .f01-keep-the-region-depth {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 1060px;
+          font-size: 132px;
+          line-height: 0.96;
+          letter-spacing: -0.045em;
+          font-weight: 700;
+          white-space: nowrap;
+          transform-origin: 0 50%;
+        }
+
+        .f01-keep-the-region-depth-back {
+          color: rgba(39, 103, 203, 0.07);
+        }
+
+        .f01-keep-the-region-depth-mid {
+          color: rgba(39, 103, 203, 0.13);
+        }
+
+        .f01-keep-the-region-depth-front {
+          color: #07111f;
+        }
+
+        .f01-keep-the-region-rule-track {
+          position: absolute;
+          left: 2px;
+          top: 160px;
+          width: 700px;
+          height: 5px;
+          border-radius: 6px;
+          background: rgba(39, 103, 203, 0.15);
+          overflow: hidden;
+        }
+
+        .f01-keep-the-region-rule-fill {
+          display: block;
+          width: 100%;
+          height: 100%;
+          border-radius: 6px;
+          background: #2767cb;
+          transform-origin: 0 50%;
+        }
+
+        .f01-keep-the-region-phrase,
+        .f01-keep-the-region-payoff {
+          position: absolute;
+          left: 0;
+          top: 262px;
+          width: 1120px;
+          min-height: 150px;
+          display: flex;
+          align-items: baseline;
+          flex-wrap: wrap;
+          gap: 0 0.25em;
+          font-size: 82px;
+          line-height: 1.08;
+          letter-spacing: -0.035em;
+          font-weight: 700;
+          transform-origin: 0 50%;
+        }
+
+        .f01-keep-the-region-word {
+          display: inline-block;
+          color: #07111f;
+        }
+
+        .f01-keep-the-region-word-accent {
+          color: #2767cb;
+        }
+
+        .f01-keep-the-region-payoff {
+          color: #07111f;
+        }
+
+        .f01-keep-the-region-payoff-emphasis {
+          color: #2767cb;
+        }
+
+        .f01-keep-the-region-region {
+          position: absolute;
+          left: 1320px;
+          top: 154px;
+          width: 470px;
+          height: 520px;
+        }
+
+        .f01-keep-the-region-region-label {
+          position: absolute;
+          left: 20px;
+          top: 0;
+          color: #2767cb;
+          font-size: 16px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .f01-keep-the-region-window {
+          position: absolute;
+          width: 392px;
+          height: 286px;
+          border: 1.5px solid rgba(39, 103, 203, 0.2);
+          border-radius: 14px;
+          background: rgba(39, 103, 203, 0.04);
+          overflow: hidden;
+        }
+
+        .f01-keep-the-region-window-back {
+          left: 58px;
+          top: 150px;
+          opacity: 0.34;
+        }
+
+        .f01-keep-the-region-window-mid {
+          left: 38px;
+          top: 116px;
+          opacity: 0.58;
+        }
+
+        .f01-keep-the-region-window-front {
+          left: 18px;
+          top: 82px;
+          opacity: 1;
+        }
+
+        .f01-keep-the-region-window-bar {
+          height: 36px;
+          border-bottom: 1.5px solid rgba(39, 103, 203, 0.2);
+          background: rgba(39, 103, 203, 0.08);
+        }
+
+        .f01-keep-the-region-window-dots {
+          display: flex;
+          gap: 8px;
+          padding: 13px 14px;
+        }
+
+        .f01-keep-the-region-window-dot {
+          width: 9px;
+          height: 9px;
+          border-radius: 50%;
+          background: rgba(39, 103, 203, 0.35);
+        }
+
+        .f01-keep-the-region-window-body {
+          position: absolute;
+          left: 28px;
+          right: 28px;
+          top: 76px;
+          display: grid;
+          gap: 16px;
+        }
+
+        .f01-keep-the-region-window-line {
+          height: 12px;
+          border-radius: 6px;
+          background: rgba(39, 103, 203, 0.15);
+        }
+
+        .f01-keep-the-region-window-line-short {
+          width: 62%;
+        }
+
+        .f01-keep-the-region-region-outline {
+          position: absolute;
+          left: 0;
+          top: 62px;
+          width: 430px;
+          height: 392px;
+          border: 3px solid #2767cb;
+          border-radius: 14px;
+          box-sizing: border-box;
+        }
+
+        .f01-keep-the-region-progress-track {
+          position: absolute;
+          left: 96px;
+          top: 846px;
+          width: 1728px;
+          height: 6px;
+          border-radius: 6px;
+          overflow: hidden;
+          background: rgba(39, 103, 203, 0.15);
+        }
+
+        .f01-keep-the-region-progress-fill {
+          display: block;
+          width: 100%;
+          height: 100%;
+          border-radius: 6px;
+          background: #2767cb;
+          transform-origin: 0 50%;
+        }
+      </style>
+
+      <div
+        id="root"
+        data-composition-id="01-keep-the-region"
+        data-width="1920"
+        data-height="1080"
+        data-duration="12.4"
+      >
+        <div
+          id="f01-keep-the-region-ground"
+          class="clip f01-keep-the-region-ground"
+          data-start="0"
+          data-duration="12.4"
+          data-track-index="0"
+        ></div>
+
+        <div
+          id="f01-keep-the-region-content"
+          class="clip f01-keep-the-region-content"
+          data-start="0"
+          data-duration="12.4"
+          data-track-index="1"
+        >
+          <div class="f01-keep-the-region-stage">
+            <div class="f01-keep-the-region-copy">
+              <div id="f01-keep-the-region-depth-back" class="f01-keep-the-region-depth f01-keep-the-region-depth-back" data-layout-allow-overlap>Your windows</div>
+              <div id="f01-keep-the-region-depth-mid" class="f01-keep-the-region-depth f01-keep-the-region-depth-mid" data-layout-allow-overlap>Your windows</div>
+              <div id="f01-keep-the-region-depth-front" class="f01-keep-the-region-depth f01-keep-the-region-depth-front" data-layout-allow-overlap>Your windows</div>
+
+              <div class="f01-keep-the-region-rule-track">
+                <span id="f01-keep-the-region-rule-fill" class="f01-keep-the-region-rule-fill"></span>
+              </div>
+
+              <div id="f01-keep-the-region-phrase" class="f01-keep-the-region-phrase" aria-label="already have a place">
+                <span class="f01-keep-the-region-word">already</span>
+                <span class="f01-keep-the-region-word">have</span>
+                <span class="f01-keep-the-region-word">a</span>
+                <span class="f01-keep-the-region-word f01-keep-the-region-word-accent">place</span>
+              </div>
+
+              <div id="f01-keep-the-region-payoff" class="f01-keep-the-region-payoff">
+                <span id="f01-keep-the-region-payoff-text">Share it.</span>
+              </div>
+            </div>
+
+            <div id="f01-keep-the-region-region" class="f01-keep-the-region-region">
+              <div class="f01-keep-the-region-region-label">One region</div>
+              <div class="f01-keep-the-region-window f01-keep-the-region-window-back">
+                <div class="f01-keep-the-region-window-bar"></div>
+              </div>
+              <div class="f01-keep-the-region-window f01-keep-the-region-window-mid">
+                <div class="f01-keep-the-region-window-bar"></div>
+              </div>
+              <div class="f01-keep-the-region-window f01-keep-the-region-window-front">
+                <div class="f01-keep-the-region-window-bar">
+                  <div class="f01-keep-the-region-window-dots">
+                    <span class="f01-keep-the-region-window-dot"></span>
+                    <span class="f01-keep-the-region-window-dot"></span>
+                    <span class="f01-keep-the-region-window-dot"></span>
+                  </div>
+                </div>
+                <div class="f01-keep-the-region-window-body">
+                  <div class="f01-keep-the-region-window-line"></div>
+                  <div class="f01-keep-the-region-window-line f01-keep-the-region-window-line-short"></div>
+                  <div class="f01-keep-the-region-window-line"></div>
+                </div>
+              </div>
+              <div id="f01-keep-the-region-region-outline" class="f01-keep-the-region-region-outline"></div>
+            </div>
+
+            <div class="f01-keep-the-region-progress-track">
+              <span id="f01-keep-the-region-progress-fill" class="f01-keep-the-region-progress-fill"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+
+        const tl = gsap.timeline({ paused: true });
+        const depthBack = document.getElementById("f01-keep-the-region-depth-back");
+        const depthMid = document.getElementById("f01-keep-the-region-depth-mid");
+        const depthFront = document.getElementById("f01-keep-the-region-depth-front");
+        const ruleFill = document.getElementById("f01-keep-the-region-rule-fill");
+        const phrase = document.getElementById("f01-keep-the-region-phrase");
+        const words = Array.from(phrase.querySelectorAll('[class~="f01-keep-the-region-word"]'));
+        const region = document.getElementById("f01-keep-the-region-region");
+        const regionOutline = document.getElementById("f01-keep-the-region-region-outline");
+        const payoff = document.getElementById("f01-keep-the-region-payoff");
+        const payoffText = document.getElementById("f01-keep-the-region-payoff-text");
+        const progressFill = document.getElementById("f01-keep-the-region-progress-fill");
+
+        tl.fromTo(depthBack, { opacity: 0, x: 42, y: 22 }, { opacity: 1, x: 20, y: 14, duration: 0.42, ease: "power3.out" }, 0.02);
+        tl.fromTo(depthMid, { opacity: 0, x: 25, y: 13 }, { opacity: 1, x: 10, y: 7, duration: 0.45, ease: "power3.out" }, 0.08);
+        tl.fromTo(depthFront, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 0.12);
+        tl.fromTo(ruleFill, { scaleX: 0 }, { scaleX: 1, duration: 1.0, ease: "power3.inOut" }, 0.38);
+
+        tl.set(phrase, { opacity: 1 }, 0);
+        tl.set(payoff, { opacity: 0 }, 0);
+        tl.set(region, { opacity: 0 }, 0);
+
+        const wordContent = ["already", "have", "a", "place"];
+        const baseDuration = 0.28;
+        const secondsPerCharacter = 0.045;
+        const wordHold = 0.16;
+        let wordCursor = 3.14;
+        const wordTimeline = wordContent.map((text, index) => {
+          const start = wordCursor;
+          const duration = baseDuration + text.length * secondsPerCharacter + wordHold;
+          wordCursor += duration;
+          return { index, start, duration };
+        });
+
+        wordTimeline.forEach(({ index, start }) => {
+          tl.fromTo(words[index], { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.52, ease: "power3.out" }, start);
+        });
+
+        tl.fromTo(region, { opacity: 0, x: 55 }, { opacity: 1, x: 0, duration: 0.72, ease: "power3.out" }, 3.42);
+        tl.fromTo(regionOutline, { opacity: 0, scale: 1.06 }, { opacity: 1, scale: 1, duration: 0.9, ease: "expo.out" }, 4.35);
+
+        tl.set(phrase, { opacity: 0 }, 7.0);
+        tl.set(payoff, { opacity: 1 }, 7.0);
+
+        const payoffSequence = [
+          { t: 7.0, text: "Share it." },
+          { t: 8.55, text: "Share it. Keep context." }
+        ];
+
+        function payoffAt(time) {
+          for (let i = payoffSequence.length - 1; i >= 0; i -= 1) {
+            if (time >= payoffSequence[i].t) return payoffSequence[i].text;
+          }
+          return payoffSequence[0].text;
+        }
+
+        const payoffDriver = { t: 0 };
+        let lastPayoff = "";
+        tl.to(payoffDriver, {
+          t: 12,
+          duration: 12,
+          ease: "none",
+          onUpdate: () => {
+            const nextPayoff = payoffAt(payoffDriver.t);
+            if (nextPayoff !== lastPayoff) {
+              payoffText.textContent = nextPayoff;
+              if (nextPayoff.includes("Keep context.")) {
+                payoffText.innerHTML = "Share it. <span class=\"f01-keep-the-region-payoff-emphasis\">Keep context.</span>";
+              }
+              lastPayoff = nextPayoff;
+            }
+          }
+        }, 0);
+
+        tl.fromTo(progressFill, { scaleX: 0 }, { scaleX: 1, duration: 12, ease: "none" }, 0);
+
+        window.__timelines["01-keep-the-region"] = tl;
+      </script>
+    </template>
+  </body>
+</html>
