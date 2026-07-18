@@ -85,3 +85,6 @@ em português num Windows configurado em português e pode ser forçada com
 ## License
 
 [MIT](LICENSE) © 2026 JC-OM
+
+Packaged builds include third-party libraries under their own licenses; see
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
