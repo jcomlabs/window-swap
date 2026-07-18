@@ -1,0 +1,48 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: py -m pip install -e ".[build]"
+      - run: >-
+          pyinstaller --noconsole --onefile --clean
+          --name window-swap window_swapper.py
+      - name: Create SHA-256 digest
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash -Algorithm SHA256 dist/window-swap.exe).Hash.ToLowerInvariant()
+          "$hash  window-swap.exe" | Set-Content -Encoding ascii dist/window-swap.exe.sha256
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $arguments = @(
+            "release", "create", $tag,
+            "dist/window-swap.exe",
+            "dist/window-swap.exe.sha256",
+            "--title", $tag,
+            "--generate-notes"
+          )
+          if ($tag.Contains("-")) {
+            $arguments += "--prerelease"
+          }
+          & gh @arguments
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
