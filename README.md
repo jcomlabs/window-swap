@@ -24,6 +24,10 @@ Windows taskbar and Snap layouts unchanged.
 Set `WINDOW_SWAP_LANGUAGE=en` or `WINDOW_SWAP_LANGUAGE=pt` before launch to override
 the detected UI language.
 
+For opt-in troubleshooting, set `WINDOW_SWAP_LOG` to a writable file path before
+launch. Diagnostics contain internal errors but never intentionally log window
+titles or contents.
+
 ## Install from source
 
 ```powershell
