@@ -40,3 +40,19 @@ def next_window_in_z_order(handles: Iterable[int]) -> int | None:
         if handle and handle not in unique:
             unique.append(handle)
     return unique[1] if len(unique) > 1 else None
+
+
+def popup_geometry(
+    rect: Rect, width: int, height: int, margin: int = 20
+) -> str:
+    """Return a valid Tk position that stays inside the target window region."""
+
+    if width <= 0 or height <= 0:
+        raise ValueError("popup dimensions must be positive")
+    if margin < 0:
+        raise ValueError("margin must be non-negative")
+
+    left, top, right, bottom = rect
+    x = max(left, right - width - margin)
+    y = max(top, bottom - height - margin)
+    return f"{x:+d}{y:+d}"

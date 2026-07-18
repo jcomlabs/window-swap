@@ -9,6 +9,7 @@ import os
 import sys
 import threading
 import tkinter as tk
+from ctypes import wintypes
 from pathlib import Path
 
 import pystray
@@ -17,13 +18,20 @@ import win32con
 import win32gui
 from PIL import Image, ImageDraw, ImageFont
 
-from window_swap_core import next_window_in_z_order, point_in_swap_corner, rects_match
+from window_swap_core import (
+    next_window_in_z_order,
+    point_in_swap_corner,
+    popup_geometry,
+    rects_match,
+)
 
 LOGGER = logging.getLogger(__name__)
 
 TOLERANCE = 15
 CORNER_SIZE = 100
 APP_NAME = "WindowSwap"
+INSTANCE_MUTEX_NAME = r"Local\JCOMLabs.WindowSwap"
+ERROR_ALREADY_EXISTS = 183
 
 STRINGS = {
     "en": {
@@ -43,6 +51,50 @@ STRINGS = {
         "inactive_title": "Window Swap (inativo)",
     },
 }
+
+
+def configure_logging() -> None:
+    """Enable opt-in diagnostics without logging window titles or contents."""
+
+    log_path = os.environ.get("WINDOW_SWAP_LOG", "").strip()
+    if not log_path:
+        return
+    try:
+        handler = logging.FileHandler(Path(log_path).expanduser(), encoding="utf-8")
+    except OSError:
+        return
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+    )
+    LOGGER.addHandler(handler)
+    LOGGER.setLevel(logging.DEBUG)
+
+
+def acquire_instance_mutex(name: str = INSTANCE_MUTEX_NAME) -> int | None:
+    """Acquire the per-session mutex, or return None when already running."""
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateMutexW.argtypes = [wintypes.LPVOID, wintypes.BOOL, wintypes.LPCWSTR]
+    kernel32.CreateMutexW.restype = wintypes.HANDLE
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel32.CloseHandle.restype = wintypes.BOOL
+    handle = kernel32.CreateMutexW(None, False, name)
+    if not handle:
+        raise ctypes.WinError(ctypes.get_last_error())
+    if ctypes.get_last_error() == ERROR_ALREADY_EXISTS:
+        kernel32.CloseHandle(handle)
+        return None
+    return int(handle)
+
+
+def release_instance_mutex(handle: int) -> None:
+    """Release a mutex handle returned by acquire_instance_mutex."""
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel32.CloseHandle.restype = wintypes.BOOL
+    if not kernel32.CloseHandle(handle):
+        raise ctypes.WinError(ctypes.get_last_error())
 
 
 def detect_language() -> str:
@@ -86,6 +138,7 @@ class WindowSwapApp:
         self.language = language or detect_language()
         self.text = STRINGS[self.language]
         self.root = tk.Tk()
+        self.root.title("Window Swap")
         self.root.overrideredirect(True)
         self.root.attributes("-topmost", True)
 
@@ -109,6 +162,7 @@ class WindowSwapApp:
         self.current_stack: list[tuple[int, tuple[int, int, int, int]]] = []
         self.is_button_visible = False
         self.enabled = True
+        LOGGER.debug("Window Swap initialized")
         self.check_loop()
 
     def toggle_enabled(self) -> bool:
@@ -194,12 +248,11 @@ class WindowSwapApp:
                             self.root.update_idletasks()
                             width = self.root.winfo_reqwidth()
                             height = self.root.winfo_reqheight()
-                            self.root.geometry(
-                                f"+{rect[2] - width - 20}+{rect[3] - height - 20}"
-                            )
+                            self.root.geometry(popup_geometry(rect, width, height))
                             self.root.deiconify()
                             self.root.attributes("-topmost", True)
                             self.is_button_visible = True
+                            LOGGER.debug("Swap button shown")
                     else:
                         self.hide_button()
                 else:
@@ -316,10 +369,18 @@ def run_tray(app: WindowSwapApp) -> pystray.Icon:
 
 
 def main() -> None:
-    set_dpi_awareness()
-    app = WindowSwapApp()
-    run_tray(app)
-    app.root.mainloop()
+    configure_logging()
+    mutex = acquire_instance_mutex()
+    if mutex is None:
+        LOGGER.debug("Another Window Swap instance is already running")
+        return
+    try:
+        set_dpi_awareness()
+        app = WindowSwapApp()
+        run_tray(app)
+        app.root.mainloop()
+    finally:
+        release_instance_mutex(mutex)
 
 
 if __name__ == "__main__":
