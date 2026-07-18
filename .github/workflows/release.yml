@@ -17,9 +17,9 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: py -m pip install -e ".[build]"
+      - run: python -m pip install -e ".[build]"
       - run: >-
-          pyinstaller --noconsole --onefile --clean
+          python -m PyInstaller --noconsole --onefile --clean
           --name window-swap window_swapper.py
       - name: Create SHA-256 digest
         shell: pwsh
