@@ -106,4 +106,4 @@ Codex, and GPT-5.6.
 - Demo video: `OWNER_TO_ADD_PUBLIC_YOUTUBE_URL`
 - Prepared upload: `Downloads\Window-Swap-Build-Week-2026.mp4`
   (98 seconds, H.264/AAC, 1920×1080)
-- `/feedback` session ID: `OWNER_TO_ADD_SESSION_ID`
+- `/feedback` session ID: `kept private`
