@@ -6,11 +6,15 @@ import ctypes
 import locale
 import logging
 import os
+import queue
 import sys
 import threading
+import time
 import tkinter as tk
+from collections.abc import Callable
 from ctypes import wintypes
 from pathlib import Path
+from tkinter import ttk
 
 import pystray
 import win32api
@@ -24,31 +28,67 @@ from window_swap_core import (
     popup_geometry,
     rects_match,
 )
+from window_swap_settings import (
+    ALLOWED_TRIGGER_DELAYS_MS,
+    AppSettings,
+    load_settings,
+    save_settings,
+)
 
 LOGGER = logging.getLogger(__name__)
 
 TOLERANCE = 15
 CORNER_SIZE = 100
 APP_NAME = "WindowSwap"
+APP_VERSION = "1.2.0-beta.1"
 INSTANCE_MUTEX_NAME = r"Local\JCOMLabs.WindowSwap"
 ERROR_ALREADY_EXISTS = 183
+DWMWA_CLOAKED = 14
+GWL_EXSTYLE = -20
+WS_EX_TOOLWINDOW = 0x00000080
+CHECK_INTERVAL_MS = 80
+SWAP_COOLDOWN_SECONDS = 0.45
 
 STRINGS = {
     "en": {
         "swap": "Swap",
         "enabled": "Enabled",
         "startup": "Start with Windows",
+        "settings": "Status and settings...",
         "exit": "Exit",
         "active_title": "Window Swap (enabled)",
         "inactive_title": "Window Swap (disabled)",
+        "ready": "Ready",
+        "paused": "Paused",
+        "status_help": "Move the pointer to the bottom-right corner of stacked windows.",
+        "trigger_delay": "Trigger delay",
+        "instant": "Instant",
+        "balanced": "Balanced (0.2 s)",
+        "deliberate": "Deliberate (0.4 s)",
+        "show_count": "Show the number of stacked windows",
+        "privacy": "Local only · no telemetry · window titles are not read",
+        "close": "Close",
+        "windows": "windows",
     },
     "pt": {
         "swap": "Trocar",
         "enabled": "Ativo",
         "startup": "Arrancar com o Windows",
+        "settings": "Estado e definições...",
         "exit": "Sair",
         "active_title": "Window Swap (ativo)",
         "inactive_title": "Window Swap (inativo)",
+        "ready": "Pronto",
+        "paused": "Em pausa",
+        "status_help": "Move o ponteiro para o canto inferior direito das janelas sobrepostas.",
+        "trigger_delay": "Atraso de ativação",
+        "instant": "Imediato",
+        "balanced": "Equilibrado (0,2 s)",
+        "deliberate": "Deliberado (0,4 s)",
+        "show_count": "Mostrar o número de janelas sobrepostas",
+        "privacy": "Apenas local · sem telemetria · não lê títulos de janelas",
+        "close": "Fechar",
+        "windows": "janelas",
     },
 }
 
@@ -117,16 +157,51 @@ def set_dpi_awareness() -> None:
             LOGGER.debug("Per-monitor DPI awareness is unavailable", exc_info=True)
 
 
+def is_window_cloaked(hwnd: int) -> bool:
+    """Return whether DWM is keeping a window hidden from the desktop."""
+
+    cloaked = wintypes.DWORD()
+    try:
+        result = ctypes.windll.dwmapi.DwmGetWindowAttribute(
+            wintypes.HWND(hwnd),
+            DWMWA_CLOAKED,
+            ctypes.byref(cloaked),
+            ctypes.sizeof(cloaked),
+        )
+    except (AttributeError, OSError):
+        return False
+    return result == 0 and bool(cloaked.value)
+
+
+def get_shell_window() -> int:
+    try:
+        return int(ctypes.windll.user32.GetShellWindow())
+    except (AttributeError, OSError):
+        return 0
+
+
+def is_candidate_window(hwnd: int) -> bool:
+    """Filter desktop windows without reading their titles or contents."""
+
+    if not win32gui.IsWindowVisible(hwnd) or win32gui.IsIconic(hwnd):
+        return False
+    if hwnd == get_shell_window() or is_window_cloaked(hwnd):
+        return False
+    try:
+        if win32gui.GetWindowLong(hwnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW:
+            return False
+        left, top, right, bottom = win32gui.GetWindowRect(hwnd)
+    except (OSError, win32gui.error):
+        return False
+    return right > left and bottom > top
+
+
 def get_visible_windows() -> list[tuple[int, tuple[int, int, int, int]]]:
     windows: list[tuple[int, tuple[int, int, int, int]]] = []
 
     def callback(hwnd: int, output: list[tuple[int, tuple[int, int, int, int]]]) -> bool:
-        if win32gui.IsWindowVisible(hwnd) and not win32gui.IsIconic(hwnd):
-            title = win32gui.GetWindowText(hwnd)
-            if title and title != "Program Manager":
-                rect = win32gui.GetWindowRect(hwnd)
-                if rect[2] > rect[0] and rect[3] > rect[1]:
-                    output.append((hwnd, rect))
+        if is_candidate_window(hwnd):
+            output.append((hwnd, win32gui.GetWindowRect(hwnd)))
         return True
 
     win32gui.EnumWindows(callback, windows)
@@ -134,14 +209,28 @@ def get_visible_windows() -> list[tuple[int, tuple[int, int, int, int]]]:
 
 
 class WindowSwapApp:
-    def __init__(self, language: str | None = None) -> None:
+    def __init__(
+        self,
+        language: str | None = None,
+        settings: AppSettings | None = None,
+    ) -> None:
         self.language = language or detect_language()
         self.text = STRINGS[self.language]
+        self.settings = settings or load_settings()
+        self.enabled = True
+        self.current_stack: list[tuple[int, tuple[int, int, int, int]]] = []
+        self.current_rect: tuple[int, int, int, int] | None = None
+        self.is_button_visible = False
+        self.candidate_key: tuple[int, tuple[int, int, int, int]] | None = None
+        self.candidate_since = 0.0
+        self.cooldown_until = 0.0
+        self.settings_window: tk.Toplevel | None = None
+        self.ui_actions: queue.SimpleQueue[Callable[[], None]] = queue.SimpleQueue()
+
         self.root = tk.Tk()
         self.root.title("Window Swap")
         self.root.overrideredirect(True)
         self.root.attributes("-topmost", True)
-
         self.button = tk.Button(
             self.root,
             text=f"⇄ {self.text['swap']}",
@@ -149,37 +238,76 @@ class WindowSwapApp:
             fg="white",
             font=("Segoe UI", 10, "bold"),
             bd=0,
-            padx=10,
-            pady=5,
-            activebackground="#404040",
+            padx=12,
+            pady=6,
+            activebackground="#303030",
             activeforeground="white",
             cursor="hand2",
             command=self.swap,
         )
         self.button.pack(fill=tk.BOTH, expand=True)
+        self.root.update_idletasks()
+        try:
+            win32gui.SetWindowText(int(self.root.frame(), 16), "Window Swap action")
+        except Exception:
+            LOGGER.debug("Unable to set the overlay accessibility name", exc_info=True)
         self.root.withdraw()
 
-        self.current_stack: list[tuple[int, tuple[int, int, int, int]]] = []
-        self.is_button_visible = False
-        self.enabled = True
-        LOGGER.debug("Window Swap initialized")
+        LOGGER.debug("Window Swap %s initialized", APP_VERSION)
         self.check_loop()
 
-    def toggle_enabled(self) -> bool:
-        self.enabled = not self.enabled
+    def post(self, action: Callable[[], None]) -> None:
+        """Queue work from tray callbacks for Tk's main thread."""
+
+        self.ui_actions.put(action)
+
+    def process_ui_actions(self) -> None:
+        while True:
+            try:
+                action = self.ui_actions.get_nowait()
+            except queue.Empty:
+                return
+            try:
+                action()
+            except Exception:
+                LOGGER.exception("A queued UI action failed")
+
+    def set_enabled(self, enabled: bool) -> bool:
+        self.enabled = bool(enabled)
         if not self.enabled:
-            self.hide_button()
+            self.hide_button(reset_candidate=True)
+        self.refresh_settings_window()
         return self.enabled
 
-    def hide_button(self) -> None:
+    def toggle_enabled(self) -> bool:
+        return self.set_enabled(not self.enabled)
+
+    def hide_button(self, *, reset_candidate: bool = True) -> None:
         if self.is_button_visible:
             self.root.withdraw()
             self.is_button_visible = False
+        self.current_stack = []
+        self.current_rect = None
+        if reset_candidate:
+            self.candidate_key = None
+            self.candidate_since = 0.0
+
+    def pointer_over_button(self, x: int, y: int) -> bool:
+        if not self.is_button_visible:
+            return False
+        return (
+            self.root.winfo_x() <= x <= self.root.winfo_x() + self.root.winfo_width()
+            and self.root.winfo_y()
+            <= y
+            <= self.root.winfo_y() + self.root.winfo_height()
+        )
 
     def set_foreground(self, hwnd: int) -> None:
         """Ask Windows to activate a selected existing top-level window."""
 
         try:
+            if not win32gui.IsWindow(hwnd):
+                return
             if win32gui.IsIconic(hwnd):
                 win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
 
@@ -191,77 +319,222 @@ class WindowSwapApp:
             LOGGER.debug("Windows refused a foreground transition", exc_info=True)
 
     def swap(self) -> None:
-        if len(self.current_stack) < 2:
+        if len(self.current_stack) < 2 or self.current_rect is None:
             return
 
         stack_members = {handle for handle, _ in self.current_stack}
         ordered_handles = [
-            handle for handle, _ in get_visible_windows() if handle in stack_members
+            handle
+            for handle, rect in get_visible_windows()
+            if handle in stack_members and rects_match(self.current_rect, rect, TOLERANCE)
         ]
         next_handle = next_window_in_z_order(ordered_handles)
+        self.cooldown_until = time.monotonic() + SWAP_COOLDOWN_SECONDS
+        self.hide_button(reset_candidate=True)
         if next_handle is not None:
             self.set_foreground(next_handle)
 
-    def check_loop(self) -> None:
-        if not self.enabled:
-            self.hide_button()
-            self.root.after(100, self.check_loop)
+    def button_text(self, stack_size: int) -> str:
+        label = f"⇄ {self.text['swap']}"
+        if self.settings.show_stack_count:
+            label += f"  ·  {stack_size}"
+        return label
+
+    def show_button(
+        self,
+        rect: tuple[int, int, int, int],
+        stack: list[tuple[int, tuple[int, int, int, int]]],
+    ) -> None:
+        self.current_stack = stack
+        self.current_rect = rect
+        self.button.configure(text=self.button_text(len(stack)))
+        self.root.update_idletasks()
+        width = self.root.winfo_reqwidth()
+        height = self.root.winfo_reqheight()
+        self.root.geometry(popup_geometry(rect, width, height))
+        if not self.is_button_visible:
+            self.root.deiconify()
+            self.root.attributes("-topmost", True)
+            self.is_button_visible = True
+            LOGGER.debug("Swap button shown for %d windows", len(stack))
+
+    def inspect_pointer(self, now: float) -> None:
+        x, y = win32api.GetCursorPos()
+        if self.pointer_over_button(x, y):
+            return
+        if now < self.cooldown_until:
+            self.hide_button(reset_candidate=True)
             return
 
+        hwnd = win32gui.GetAncestor(win32gui.WindowFromPoint((x, y)), win32con.GA_ROOT)
+        own_hwnd = int(self.root.frame(), 16)
+        if not hwnd or hwnd == own_hwnd or not is_candidate_window(hwnd):
+            self.hide_button(reset_candidate=True)
+            return
+
+        rect = win32gui.GetWindowRect(hwnd)
+        if not point_in_swap_corner((x, y), rect, CORNER_SIZE):
+            self.hide_button(reset_candidate=True)
+            return
+
+        stack = [
+            (handle, candidate_rect)
+            for handle, candidate_rect in get_visible_windows()
+            if rects_match(rect, candidate_rect, TOLERANCE)
+        ]
+        if len(stack) < 2:
+            self.hide_button(reset_candidate=True)
+            return
+
+        candidate_key = (hwnd, rect)
+        if candidate_key != self.candidate_key:
+            self.hide_button(reset_candidate=False)
+            self.candidate_key = candidate_key
+            self.candidate_since = now
+
+        elapsed_ms = (now - self.candidate_since) * 1000
+        if elapsed_ms >= self.settings.trigger_delay_ms:
+            self.show_button(rect, stack)
+
+    def check_loop(self) -> None:
+        self.process_ui_actions()
+        if not self.enabled:
+            self.hide_button(reset_candidate=True)
+        else:
+            try:
+                self.inspect_pointer(time.monotonic())
+            except Exception:
+                self.hide_button(reset_candidate=True)
+                LOGGER.debug("Desktop inspection failed", exc_info=True)
+        self.root.after(CHECK_INTERVAL_MS, self.check_loop)
+
+    def refresh_settings_window(self) -> None:
+        window = self.settings_window
+        if window is None or not window.winfo_exists():
+            return
+        status_var = getattr(window, "status_var", None)
+        enabled_var = getattr(window, "enabled_var", None)
+        startup_var = getattr(window, "startup_var", None)
+        if status_var is not None:
+            status_var.set(self.text["ready"] if self.enabled else self.text["paused"])
+        if enabled_var is not None:
+            enabled_var.set(self.enabled)
+        if startup_var is not None:
+            startup_var.set(is_startup_enabled())
+
+    def update_settings(
+        self,
+        delay_ms: int,
+        show_stack_count: bool,
+    ) -> None:
+        settings = AppSettings(
+            trigger_delay_ms=delay_ms,
+            show_stack_count=show_stack_count,
+        )
         try:
-            x, y = win32api.GetCursorPos()
+            save_settings(settings)
+        except (OSError, RuntimeError):
+            LOGGER.exception("Unable to save Window Swap settings")
+        self.settings = settings
+        self.hide_button(reset_candidate=True)
 
-            if self.is_button_visible:
-                button_rect = (
-                    self.root.winfo_x(),
-                    self.root.winfo_y(),
-                    self.root.winfo_x() + self.root.winfo_width(),
-                    self.root.winfo_y() + self.root.winfo_height(),
-                )
-                if button_rect[0] <= x <= button_rect[2] and button_rect[1] <= y <= button_rect[3]:
-                    self.root.after(100, self.check_loop)
-                    return
+    def show_settings(self) -> None:
+        if self.settings_window is not None and self.settings_window.winfo_exists():
+            self.settings_window.deiconify()
+            self.settings_window.lift()
+            self.settings_window.focus_force()
+            self.refresh_settings_window()
+            return
 
-            hwnd = win32gui.GetAncestor(
-                win32gui.WindowFromPoint((x, y)), win32con.GA_ROOT
-            )
-            own_hwnd = int(self.root.frame(), 16)
-            if not hwnd or hwnd == own_hwnd:
-                self.hide_button()
-            else:
-                rect = win32gui.GetWindowRect(hwnd)
-                in_corner = point_in_swap_corner((x, y), rect, CORNER_SIZE)
-                eligible = (
-                    in_corner
-                    and win32gui.IsWindowVisible(hwnd)
-                    and not win32gui.IsIconic(hwnd)
-                )
-                if eligible:
-                    stack = [
-                        (handle, candidate_rect)
-                        for handle, candidate_rect in get_visible_windows()
-                        if rects_match(rect, candidate_rect, TOLERANCE)
-                    ]
-                    if len(stack) > 1:
-                        self.current_stack = stack
-                        if not self.is_button_visible:
-                            self.root.update_idletasks()
-                            width = self.root.winfo_reqwidth()
-                            height = self.root.winfo_reqheight()
-                            self.root.geometry(popup_geometry(rect, width, height))
-                            self.root.deiconify()
-                            self.root.attributes("-topmost", True)
-                            self.is_button_visible = True
-                            LOGGER.debug("Swap button shown")
-                    else:
-                        self.hide_button()
-                else:
-                    self.hide_button()
-        except Exception:
-            self.hide_button()
-            LOGGER.debug("Desktop inspection failed", exc_info=True)
+        window = tk.Toplevel(self.root)
+        self.settings_window = window
+        window.title(f"Window Swap {APP_VERSION}")
+        window.resizable(False, False)
+        window.attributes("-topmost", True)
+        window.protocol("WM_DELETE_WINDOW", window.withdraw)
 
-        self.root.after(100, self.check_loop)
+        frame = ttk.Frame(window, padding=20)
+        frame.grid(sticky="nsew")
+        status_var = tk.StringVar()
+        enabled_var = tk.BooleanVar(value=self.enabled)
+        startup_var = tk.BooleanVar(value=is_startup_enabled())
+        count_var = tk.BooleanVar(value=self.settings.show_stack_count)
+        window.status_var = status_var
+        window.enabled_var = enabled_var
+        window.startup_var = startup_var
+
+        ttk.Label(frame, text="Window Swap", font=("Segoe UI", 18, "bold")).grid(
+            row=0, column=0, columnspan=2, sticky="w"
+        )
+        ttk.Label(frame, textvariable=status_var, foreground="#0067c0").grid(
+            row=1, column=0, sticky="w", pady=(2, 0)
+        )
+        ttk.Label(frame, text=self.text["status_help"], wraplength=360).grid(
+            row=2, column=0, columnspan=2, sticky="w", pady=(4, 16)
+        )
+        ttk.Checkbutton(
+            frame,
+            text=self.text["enabled"],
+            variable=enabled_var,
+            command=lambda: self.set_enabled(enabled_var.get()),
+        ).grid(row=3, column=0, columnspan=2, sticky="w", pady=4)
+
+        def update_startup() -> None:
+            try:
+                set_startup_enabled(startup_var.get())
+            except Exception:
+                LOGGER.exception("Unable to update the Startup-folder shortcut")
+            self.refresh_settings_window()
+
+        ttk.Checkbutton(
+            frame,
+            text=self.text["startup"],
+            variable=startup_var,
+            command=update_startup,
+        ).grid(row=4, column=0, columnspan=2, sticky="w", pady=4)
+        ttk.Label(frame, text=self.text["trigger_delay"]).grid(
+            row=5, column=0, sticky="w", pady=(14, 4)
+        )
+        delay_labels = {
+            0: self.text["instant"],
+            200: self.text["balanced"],
+            400: self.text["deliberate"],
+        }
+        reverse_delays = {label: delay for delay, label in delay_labels.items()}
+        delay_var = tk.StringVar(value=delay_labels[self.settings.trigger_delay_ms])
+        delay_box = ttk.Combobox(
+            frame,
+            textvariable=delay_var,
+            values=[delay_labels[value] for value in ALLOWED_TRIGGER_DELAYS_MS],
+            state="readonly",
+            width=24,
+        )
+        delay_box.grid(row=5, column=1, sticky="e", pady=(14, 4))
+
+        def persist_settings(_event: object | None = None) -> None:
+            self.update_settings(reverse_delays[delay_var.get()], count_var.get())
+
+        delay_box.bind("<<ComboboxSelected>>", persist_settings)
+        ttk.Checkbutton(
+            frame,
+            text=self.text["show_count"],
+            variable=count_var,
+            command=persist_settings,
+        ).grid(row=6, column=0, columnspan=2, sticky="w", pady=4)
+        ttk.Separator(frame).grid(row=7, column=0, columnspan=2, sticky="ew", pady=14)
+        ttk.Label(frame, text=self.text["privacy"], foreground="#666666").grid(
+            row=8, column=0, sticky="w"
+        )
+        ttk.Button(frame, text=self.text["close"], command=window.withdraw).grid(
+            row=8, column=1, sticky="e"
+        )
+        self.refresh_settings_window()
+        window.update_idletasks()
+        width = window.winfo_reqwidth()
+        height = window.winfo_reqheight()
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+        window.geometry(f"{width}x{height}+{max(0, screen_width - width - 40)}+{max(0, screen_height - height - 80)}")
 
 
 def create_icon_image(enabled: bool = True) -> Image.Image:
@@ -290,24 +563,32 @@ def create_icon_image(enabled: bool = True) -> Image.Image:
     return image
 
 
-def startup_shortcut_path() -> Path:
+def startup_shortcut_paths() -> tuple[Path, Path]:
     appdata = os.environ.get("APPDATA")
     if not appdata:
         raise RuntimeError("APPDATA is unavailable; cannot manage Windows startup")
-    return Path(appdata) / "Microsoft/Windows/Start Menu/Programs/Startup/WindowSwap.lnk"
+    startup = Path(appdata) / "Microsoft/Windows/Start Menu/Programs/Startup"
+    return startup / "WindowSwap.lnk", startup / "WindowSwapper.lnk"
+
+
+def startup_shortcut_path() -> Path:
+    """Return the canonical shortcut path kept for API compatibility."""
+
+    return startup_shortcut_paths()[0]
 
 
 def is_startup_enabled() -> bool:
     try:
-        return startup_shortcut_path().is_file()
+        return any(path.is_file() for path in startup_shortcut_paths())
     except RuntimeError:
         return False
 
 
 def set_startup_enabled(enabled: bool) -> None:
-    shortcut_path = startup_shortcut_path()
+    shortcut_path, legacy_path = startup_shortcut_paths()
     if not enabled:
-        shortcut_path.unlink(missing_ok=True)
+        for path in (shortcut_path, legacy_path):
+            path.unlink(missing_ok=True)
         return
 
     import win32com.client
@@ -325,23 +606,34 @@ def set_startup_enabled(enabled: bool) -> None:
         shortcut.WorkingDirectory = str(script_path.parent)
     shortcut.IconLocation = sys.executable
     shortcut.save()
+    if legacy_path != shortcut_path:
+        legacy_path.unlink(missing_ok=True)
 
 
 def run_tray(app: WindowSwapApp) -> pystray.Icon:
     def toggle_active(icon: pystray.Icon, _item: pystray.MenuItem | None = None) -> None:
-        enabled = app.toggle_enabled()
-        icon.icon = create_icon_image(enabled)
-        icon.title = app.text["active_title"] if enabled else app.text["inactive_title"]
+        def apply_toggle() -> None:
+            enabled = app.toggle_enabled()
+            icon.icon = create_icon_image(enabled)
+            icon.title = (
+                app.text["active_title"] if enabled else app.text["inactive_title"]
+            )
+
+        app.post(apply_toggle)
 
     def toggle_startup(_icon: pystray.Icon, _item: pystray.MenuItem) -> None:
         try:
             set_startup_enabled(not is_startup_enabled())
         except Exception:
             LOGGER.exception("Unable to update the Startup-folder shortcut")
+        app.post(app.refresh_settings_window)
+
+    def show_settings(_icon: pystray.Icon, _item: pystray.MenuItem) -> None:
+        app.post(app.show_settings)
 
     def stop(icon: pystray.Icon, _item: pystray.MenuItem) -> None:
         icon.stop()
-        app.root.after(0, app.root.quit)
+        app.post(app.root.quit)
 
     menu = pystray.Menu(
         pystray.MenuItem(
@@ -355,6 +647,7 @@ def run_tray(app: WindowSwapApp) -> pystray.Icon:
             toggle_startup,
             checked=lambda _item: is_startup_enabled(),
         ),
+        pystray.MenuItem(app.text["settings"], show_settings),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem(app.text["exit"], stop),
     )
@@ -378,6 +671,8 @@ def main() -> None:
         set_dpi_awareness()
         app = WindowSwapApp()
         run_tray(app)
+        if "--settings" in sys.argv[1:]:
+            app.root.after(100, app.show_settings)
         app.root.mainloop()
     finally:
         release_instance_mutex(mutex)

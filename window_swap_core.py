@@ -29,7 +29,10 @@ def point_in_swap_corner(point: Point, rect: Rect, corner_size: int = 100) -> bo
     left, top, right, bottom = rect
     if right <= left or bottom <= top:
         return False
-    return max(left, right - corner_size) <= x <= right and max(top, bottom - corner_size) <= y <= bottom
+    return (
+        max(left, right - corner_size) <= x <= right
+        and max(top, bottom - corner_size) <= y <= bottom
+    )
 
 
 def next_window_in_z_order(handles: Iterable[int]) -> int | None:

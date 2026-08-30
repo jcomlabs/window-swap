@@ -8,9 +8,9 @@ the next matching window forward.
 It replaces repeated `Alt+Tab` searches with one spatial action while leaving the
 Windows taskbar and Snap layouts unchanged.
 
-> **Status:** `1.1.0-alpha.1` is an alpha. Windows 11 is the supported platform. The
-> geometry rules are tested, but desktop behavior still varies with applications,
-> display scaling, and multi-monitor layouts.
+> **Status:** `1.2.0-beta.1` is a test-ready beta. Windows 11 is the supported
+> platform. Geometry and settings rules are tested, but desktop behavior can still
+> vary with applications, display scaling, and multi-monitor layouts.
 
 ## Features
 
@@ -18,6 +18,8 @@ Windows taskbar and Snap layouts unchanged.
 - per-monitor DPI awareness for consistent physical-pixel geometry;
 - tray toggle and click-to-enable/disable action;
 - optional current-user Startup-folder shortcut;
+- a small status/settings panel with an accidental-trigger delay;
+- an optional stack count on the Swap button;
 - English UI by default and Portuguese UI on Portuguese Windows;
 - no network client, telemetry, account, administrator rights, or background service.
 
@@ -50,6 +52,11 @@ executables are never stored in the source tree.
 3. Select **Swap** to bring the next matching window forward.
 4. Click the tray icon to pause or resume Window Swap.
 
+Right-click the **W** tray icon for startup control, status/settings, and exit.
+The balanced 0.2-second trigger delay is the default; choose instant or deliberate
+behavior in **Status and settings**. Preferences are stored locally under
+`%LOCALAPPDATA%\JCOM Labs\Window Swap` and contain no window titles or contents.
+
 The startup option creates or removes only
 `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\WindowSwap.lnk`.
 
@@ -65,17 +72,23 @@ Build a local executable:
 
 ```powershell
 py -m pip install -e ".[build]"
-pyinstaller --noconsole --onefile --name window-swap window_swapper.py
+python build_release.py
 ```
 
-Pure geometry and ordering rules live in `window_swap_core.py`. Win32 enumeration,
-focus changes, Tk, and tray integration remain in `window_swapper.py`.
+Pure geometry and ordering rules live in `window_swap_core.py`; preference
+validation lives in `window_swap_settings.py`. Win32 enumeration, focus changes,
+Tk, and tray integration remain in `window_swapper.py`.
+
+For a safe manual check without using personal application windows, run
+`python tools/manual_smoke.py`. It opens two disposable windows in the same region
+so the corner trigger and focus cycle can be tested without exposing desktop data.
+See [ROADMAP.md](ROADMAP.md) for the deliberately small next-feature set.
 
 ## Security and privacy
 
 Window Swap inspects visible window handles and rectangles and asks Windows to
-activate an existing window. It does not need window contents and deliberately does
-not log window titles. No software can honestly claim to have no vulnerabilities;
+activate an existing window. It does not read window titles or contents. No software
+can honestly claim to have no vulnerabilities;
 see [SECURITY.md](SECURITY.md) for the supported disclosure process and trust boundary.
 
 ## Portuguese summary

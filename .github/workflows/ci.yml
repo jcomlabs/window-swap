@@ -21,4 +21,7 @@ jobs:
           cache: pip
       - run: python -m pip install -e ".[dev]"
       - run: python -m pytest
-      - run: python -m compileall -q window_swapper.py window_swap_core.py
+      - run: >-
+          python -m compileall -q
+          window_swapper.py window_swap_core.py window_swap_settings.py
+          build_release.py tools/manual_smoke.py
