@@ -62,6 +62,27 @@ def test_swap_uses_the_live_z_order_before_changing_focus(monkeypatch) -> None:
     assert foreground == [20]
 
 
+def test_swap_keeps_working_when_a_live_window_adjusts_its_bounds(monkeypatch) -> None:
+    app = window_swapper.WindowSwapApp.__new__(window_swapper.WindowSwapApp)
+    detected_rect = (0, 0, 500, 500)
+    app.current_stack = [(10, detected_rect), (20, detected_rect)]
+    app.current_rect = detected_rect
+    foreground: list[int] = []
+    app.set_foreground = foreground.append
+    monkeypatch.setattr(
+        window_swapper,
+        "get_visible_windows",
+        lambda: [
+            (10, (0, 0, 500, 500)),
+            (20, (24, 0, 524, 500)),
+        ],
+    )
+
+    app.swap()
+
+    assert foreground == [20]
+
+
 def test_repeated_clicks_continue_cycling_the_visible_stack(monkeypatch) -> None:
     app = window_swapper.WindowSwapApp.__new__(window_swapper.WindowSwapApp)
     rect = (0, 0, 500, 500)
