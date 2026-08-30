@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import uuid
 from pathlib import Path
+from types import SimpleNamespace
 
 import window_swapper
+from window_swap_settings import AppSettings
 from window_swapper import (
     acquire_instance_mutex,
     is_startup_enabled,
@@ -43,33 +45,12 @@ def test_legacy_startup_shortcut_is_recognized_and_removed(
     assert not is_startup_enabled()
 
 
-def test_candidate_filter_does_not_read_window_titles(monkeypatch) -> None:
-    monkeypatch.setattr(window_swapper.win32gui, "IsWindowVisible", lambda _hwnd: True)
-    monkeypatch.setattr(window_swapper.win32gui, "IsIconic", lambda _hwnd: False)
-    monkeypatch.setattr(window_swapper, "get_shell_window", lambda: 1)
-    monkeypatch.setattr(window_swapper.win32gui, "GetWindowLong", lambda _hwnd, _index: 0)
-    monkeypatch.setattr(
-        window_swapper.win32gui,
-        "GetWindowRect",
-        lambda _hwnd: (0, 0, 100, 100),
-    )
-    monkeypatch.setattr(window_swapper, "is_window_cloaked", lambda _hwnd: False)
-    monkeypatch.setattr(
-        window_swapper.win32gui,
-        "GetWindowText",
-        lambda _hwnd: (_ for _ in ()).throw(AssertionError("title was read")),
-    )
-    assert window_swapper.is_candidate_window(2)
-
-
-def test_swap_revalidates_the_stack_before_changing_focus(monkeypatch) -> None:
+def test_swap_uses_the_live_z_order_before_changing_focus(monkeypatch) -> None:
     app = window_swapper.WindowSwapApp.__new__(window_swapper.WindowSwapApp)
     app.current_stack = [(10, (0, 0, 500, 500)), (20, (0, 0, 500, 500))]
     app.current_rect = (0, 0, 500, 500)
-    app.cooldown_until = 0.0
     foreground: list[int] = []
     app.set_foreground = foreground.append
-    app.hide_button = lambda **_kwargs: None
     monkeypatch.setattr(
         window_swapper,
         "get_visible_windows",
@@ -79,23 +60,59 @@ def test_swap_revalidates_the_stack_before_changing_focus(monkeypatch) -> None:
     app.swap()
 
     assert foreground == [20]
-    assert app.cooldown_until > 0
 
 
-def test_swap_ignores_windows_that_moved_out_of_the_stack(monkeypatch) -> None:
+def test_repeated_clicks_continue_cycling_the_visible_stack(monkeypatch) -> None:
     app = window_swapper.WindowSwapApp.__new__(window_swapper.WindowSwapApp)
-    app.current_stack = [(10, (0, 0, 500, 500)), (20, (0, 0, 500, 500))]
-    app.current_rect = (0, 0, 500, 500)
-    app.cooldown_until = 0.0
+    rect = (0, 0, 500, 500)
+    app.current_stack = [(10, rect), (20, rect)]
+    app.current_rect = rect
+    order = [[(10, rect), (20, rect)]]
     foreground: list[int] = []
-    app.set_foreground = foreground.append
+
+    def set_foreground(hwnd: int) -> None:
+        foreground.append(hwnd)
+        order[0] = [(hwnd, rect), (10 if hwnd == 20 else 20, rect)]
+
+    app.set_foreground = set_foreground
+    monkeypatch.setattr(window_swapper, "get_visible_windows", lambda: order[0])
+
+    app.swap()
+    app.swap()
+
+    assert foreground == [20, 10]
+
+
+def test_default_trigger_shows_on_the_first_eligible_inspection(monkeypatch) -> None:
+    app = window_swapper.WindowSwapApp.__new__(window_swapper.WindowSwapApp)
+    rect = (0, 0, 500, 500)
+    shown: list[tuple[tuple[int, int, int, int], list[tuple[int, tuple[int, int, int, int]]]]] = []
+    app.root = SimpleNamespace(frame=lambda: "0x999")
+    app.settings = AppSettings()
+    app.is_button_visible = False
+    app.candidate_key = None
+    app.candidate_since = 0.0
+    app.current_stack = []
+    app.current_rect = None
+    app.pointer_over_button = lambda _x, _y: False
     app.hide_button = lambda **_kwargs: None
+    app.show_button = lambda target_rect, stack: shown.append((target_rect, stack))
+    monkeypatch.setattr(window_swapper.win32api, "GetCursorPos", lambda: (495, 495))
+    monkeypatch.setattr(window_swapper.win32gui, "WindowFromPoint", lambda _point: 10)
+    monkeypatch.setattr(
+        window_swapper.win32gui,
+        "GetAncestor",
+        lambda hwnd, _flag: hwnd,
+    )
+    monkeypatch.setattr(window_swapper.win32gui, "GetWindowRect", lambda _hwnd: rect)
+    monkeypatch.setattr(window_swapper.win32gui, "IsWindowVisible", lambda _hwnd: True)
+    monkeypatch.setattr(window_swapper.win32gui, "IsIconic", lambda _hwnd: False)
     monkeypatch.setattr(
         window_swapper,
         "get_visible_windows",
-        lambda: [(10, (0, 0, 500, 500)), (20, (600, 0, 1100, 500))],
+        lambda: [(10, rect), (20, rect)],
     )
 
-    app.swap()
+    app.inspect_pointer(100.0)
 
-    assert foreground == []
+    assert shown == [(rect, [(10, rect), (20, rect)])]

@@ -6,7 +6,7 @@ collecting window titles or contents.
 
 ## Next validation gate
 
-Before adding more behavior, use `1.2.0-beta.1` daily on the current machine and on
+Before adding more behavior, use `1.2.0-beta.2` daily on the current machine and on
 at least one second Windows 11 system. Validate mixed DPI, monitors left/above the
 primary display, Explorer, browsers, Store applications, and full-screen software.
 

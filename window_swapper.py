@@ -40,14 +40,10 @@ LOGGER = logging.getLogger(__name__)
 TOLERANCE = 15
 CORNER_SIZE = 100
 APP_NAME = "WindowSwap"
-APP_VERSION = "1.2.0-beta.1"
+APP_VERSION = "1.2.0-beta.2"
 INSTANCE_MUTEX_NAME = r"Local\JCOMLabs.WindowSwap"
 ERROR_ALREADY_EXISTS = 183
-DWMWA_CLOAKED = 14
-GWL_EXSTYLE = -20
-WS_EX_TOOLWINDOW = 0x00000080
 CHECK_INTERVAL_MS = 80
-SWAP_COOLDOWN_SECONDS = 0.45
 
 STRINGS = {
     "en": {
@@ -66,7 +62,7 @@ STRINGS = {
         "balanced": "Balanced (0.2 s)",
         "deliberate": "Deliberate (0.4 s)",
         "show_count": "Show the number of stacked windows",
-        "privacy": "Local only · no telemetry · window titles are not read",
+        "privacy": "Local only · no telemetry · window titles are never logged",
         "close": "Close",
         "windows": "windows",
     },
@@ -86,7 +82,7 @@ STRINGS = {
         "balanced": "Equilibrado (0,2 s)",
         "deliberate": "Deliberado (0,4 s)",
         "show_count": "Mostrar o número de janelas sobrepostas",
-        "privacy": "Apenas local · sem telemetria · não lê títulos de janelas",
+        "privacy": "Apenas local · sem telemetria · nunca regista títulos de janelas",
         "close": "Fechar",
         "windows": "janelas",
     },
@@ -157,51 +153,16 @@ def set_dpi_awareness() -> None:
             LOGGER.debug("Per-monitor DPI awareness is unavailable", exc_info=True)
 
 
-def is_window_cloaked(hwnd: int) -> bool:
-    """Return whether DWM is keeping a window hidden from the desktop."""
-
-    cloaked = wintypes.DWORD()
-    try:
-        result = ctypes.windll.dwmapi.DwmGetWindowAttribute(
-            wintypes.HWND(hwnd),
-            DWMWA_CLOAKED,
-            ctypes.byref(cloaked),
-            ctypes.sizeof(cloaked),
-        )
-    except (AttributeError, OSError):
-        return False
-    return result == 0 and bool(cloaked.value)
-
-
-def get_shell_window() -> int:
-    try:
-        return int(ctypes.windll.user32.GetShellWindow())
-    except (AttributeError, OSError):
-        return 0
-
-
-def is_candidate_window(hwnd: int) -> bool:
-    """Filter desktop windows without reading their titles or contents."""
-
-    if not win32gui.IsWindowVisible(hwnd) or win32gui.IsIconic(hwnd):
-        return False
-    if hwnd == get_shell_window() or is_window_cloaked(hwnd):
-        return False
-    try:
-        if win32gui.GetWindowLong(hwnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW:
-            return False
-        left, top, right, bottom = win32gui.GetWindowRect(hwnd)
-    except (OSError, win32gui.error):
-        return False
-    return right > left and bottom > top
-
-
 def get_visible_windows() -> list[tuple[int, tuple[int, int, int, int]]]:
     windows: list[tuple[int, tuple[int, int, int, int]]] = []
 
     def callback(hwnd: int, output: list[tuple[int, tuple[int, int, int, int]]]) -> bool:
-        if is_candidate_window(hwnd):
-            output.append((hwnd, win32gui.GetWindowRect(hwnd)))
+        if win32gui.IsWindowVisible(hwnd) and not win32gui.IsIconic(hwnd):
+            title = win32gui.GetWindowText(hwnd)
+            if title and title != "Program Manager":
+                rect = win32gui.GetWindowRect(hwnd)
+                if rect[2] > rect[0] and rect[3] > rect[1]:
+                    output.append((hwnd, rect))
         return True
 
     win32gui.EnumWindows(callback, windows)
@@ -223,7 +184,6 @@ class WindowSwapApp:
         self.is_button_visible = False
         self.candidate_key: tuple[int, tuple[int, int, int, int]] | None = None
         self.candidate_since = 0.0
-        self.cooldown_until = 0.0
         self.settings_window: tk.Toplevel | None = None
         self.ui_actions: queue.SimpleQueue[Callable[[], None]] = queue.SimpleQueue()
 
@@ -319,18 +279,14 @@ class WindowSwapApp:
             LOGGER.debug("Windows refused a foreground transition", exc_info=True)
 
     def swap(self) -> None:
-        if len(self.current_stack) < 2 or self.current_rect is None:
+        if len(self.current_stack) < 2:
             return
 
         stack_members = {handle for handle, _ in self.current_stack}
         ordered_handles = [
-            handle
-            for handle, rect in get_visible_windows()
-            if handle in stack_members and rects_match(self.current_rect, rect, TOLERANCE)
+            handle for handle, _ in get_visible_windows() if handle in stack_members
         ]
         next_handle = next_window_in_z_order(ordered_handles)
-        self.cooldown_until = time.monotonic() + SWAP_COOLDOWN_SECONDS
-        self.hide_button(reset_candidate=True)
         if next_handle is not None:
             self.set_foreground(next_handle)
 
@@ -362,18 +318,19 @@ class WindowSwapApp:
         x, y = win32api.GetCursorPos()
         if self.pointer_over_button(x, y):
             return
-        if now < self.cooldown_until:
-            self.hide_button(reset_candidate=True)
-            return
-
         hwnd = win32gui.GetAncestor(win32gui.WindowFromPoint((x, y)), win32con.GA_ROOT)
         own_hwnd = int(self.root.frame(), 16)
-        if not hwnd or hwnd == own_hwnd or not is_candidate_window(hwnd):
+        if not hwnd or hwnd == own_hwnd:
             self.hide_button(reset_candidate=True)
             return
 
         rect = win32gui.GetWindowRect(hwnd)
-        if not point_in_swap_corner((x, y), rect, CORNER_SIZE):
+        eligible = (
+            point_in_swap_corner((x, y), rect, CORNER_SIZE)
+            and win32gui.IsWindowVisible(hwnd)
+            and not win32gui.IsIconic(hwnd)
+        )
+        if not eligible:
             self.hide_button(reset_candidate=True)
             return
 
@@ -387,7 +344,12 @@ class WindowSwapApp:
             return
 
         candidate_key = (hwnd, rect)
-        if candidate_key != self.candidate_key:
+        same_candidate = (
+            self.candidate_key is not None
+            and hwnd == self.candidate_key[0]
+            and rects_match(rect, self.candidate_key[1], TOLERANCE)
+        )
+        if not same_candidate:
             self.hide_button(reset_candidate=False)
             self.candidate_key = candidate_key
             self.candidate_since = now

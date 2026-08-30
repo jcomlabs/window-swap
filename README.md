@@ -8,7 +8,7 @@ the next matching window forward.
 It replaces repeated `Alt+Tab` searches with one spatial action while leaving the
 Windows taskbar and Snap layouts unchanged.
 
-> **Status:** `1.2.0-beta.1` is a test-ready beta. Windows 11 is the supported
+> **Status:** `1.2.0-beta.2` is a test-ready beta. Windows 11 is the supported
 > platform. Geometry and settings rules are tested, but desktop behavior can still
 > vary with applications, display scaling, and multi-monitor layouts.
 
@@ -53,8 +53,8 @@ executables are never stored in the source tree.
 4. Click the tray icon to pause or resume Window Swap.
 
 Right-click the **W** tray icon for startup control, status/settings, and exit.
-The balanced 0.2-second trigger delay is the default; choose instant or deliberate
-behavior in **Status and settings**. Preferences are stored locally under
+The instant trigger remains the default; choose a balanced or deliberate delay in
+**Status and settings** if accidental activation is a problem. Preferences are stored locally under
 `%LOCALAPPDATA%\JCOM Labs\Window Swap` and contain no window titles or contents.
 
 The startup option creates or removes only
@@ -86,9 +86,10 @@ See [ROADMAP.md](ROADMAP.md) for the deliberately small next-feature set.
 
 ## Security and privacy
 
-Window Swap inspects visible window handles and rectangles and asks Windows to
-activate an existing window. It does not read window titles or contents. No software
-can honestly claim to have no vulnerabilities;
+Window Swap inspects visible window handles, titles, and rectangles to identify
+ordinary top-level windows, then asks Windows to activate an existing one. Titles
+never leave the machine and are not logged or saved; window contents are not read.
+No software can honestly claim to have no vulnerabilities;
 see [SECURITY.md](SECURITY.md) for the supported disclosure process and trust boundary.
 
 ## Portuguese summary

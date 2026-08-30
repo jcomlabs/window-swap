@@ -7,14 +7,16 @@ import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-DEFAULT_TRIGGER_DELAY_MS = 200
+DEFAULT_TRIGGER_DELAY_MS = 0
 ALLOWED_TRIGGER_DELAYS_MS = (0, 200, 400)
+SETTINGS_SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True, slots=True)
 class AppSettings:
     """User preferences that never contain window or account information."""
 
+    schema_version: int = SETTINGS_SCHEMA_VERSION
     trigger_delay_ms: int = DEFAULT_TRIGGER_DELAY_MS
     show_stack_count: bool = True
 
@@ -23,8 +25,17 @@ class AppSettings:
         if not isinstance(values, dict):
             return cls()
 
+        schema_version = values.get("schema_version", 1)
         delay = values.get("trigger_delay_ms", DEFAULT_TRIGGER_DELAY_MS)
         count = values.get("show_stack_count", True)
+        if (
+            isinstance(schema_version, bool)
+            or not isinstance(schema_version, int)
+            or schema_version < SETTINGS_SCHEMA_VERSION
+        ):
+            # The unreleased first beta wrote a 200 ms default that changed the
+            # established instant gesture. Treat that file as pre-migration.
+            delay = DEFAULT_TRIGGER_DELAY_MS
         if isinstance(delay, bool) or delay not in ALLOWED_TRIGGER_DELAYS_MS:
             delay = DEFAULT_TRIGGER_DELAY_MS
         if not isinstance(count, bool):
