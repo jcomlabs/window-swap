@@ -8,7 +8,7 @@ the next matching window forward.
 It replaces repeated `Alt+Tab` searches with one spatial action while leaving the
 Windows taskbar and Snap layouts unchanged.
 
-> **Status:** `1.2.0-beta.2` is a test-ready beta. Windows 11 is the supported
+> **Status:** `1.2.0-beta.3` is a test-ready beta. Windows 11 is the supported
 > platform. Geometry and settings rules are tested, but desktop behavior can still
 > vary with applications, display scaling, and multi-monitor layouts.
 

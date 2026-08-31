@@ -23,7 +23,6 @@ import win32gui
 from PIL import Image, ImageDraw, ImageFont
 
 from window_swap_core import (
-    next_window_in_z_order,
     point_in_swap_corner,
     popup_geometry,
     rects_match,
@@ -40,7 +39,7 @@ LOGGER = logging.getLogger(__name__)
 TOLERANCE = 15
 CORNER_SIZE = 100
 APP_NAME = "WindowSwap"
-APP_VERSION = "1.2.0-beta.2"
+APP_VERSION = "1.2.0-beta.3"
 INSTANCE_MUTEX_NAME = r"Local\JCOMLabs.WindowSwap"
 ERROR_ALREADY_EXISTS = 183
 CHECK_INTERVAL_MS = 80
@@ -181,6 +180,8 @@ class WindowSwapApp:
         self.enabled = True
         self.current_stack: list[tuple[int, tuple[int, int, int, int]]] = []
         self.current_rect: tuple[int, int, int, int] | None = None
+        self.cycle_handles: list[int] = []
+        self.cycle_cursor: int | None = None
         self.is_button_visible = False
         self.candidate_key: tuple[int, tuple[int, int, int, int]] | None = None
         self.candidate_since = 0.0
@@ -248,6 +249,8 @@ class WindowSwapApp:
             self.is_button_visible = False
         self.current_stack = []
         self.current_rect = None
+        self.cycle_handles = []
+        self.cycle_cursor = None
         if reset_candidate:
             self.candidate_key = None
             self.candidate_since = 0.0
@@ -262,12 +265,12 @@ class WindowSwapApp:
             <= self.root.winfo_y() + self.root.winfo_height()
         )
 
-    def set_foreground(self, hwnd: int) -> None:
+    def set_foreground(self, hwnd: int) -> bool:
         """Ask Windows to activate a selected existing top-level window."""
 
         try:
             if not win32gui.IsWindow(hwnd):
-                return
+                return False
             if win32gui.IsIconic(hwnd):
                 win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
 
@@ -275,20 +278,46 @@ class WindowSwapApp:
             win32api.keybd_event(win32con.VK_MENU, 0, 0, 0)
             win32api.keybd_event(win32con.VK_MENU, 0, win32con.KEYEVENTF_KEYUP, 0)
             win32gui.SetForegroundWindow(hwnd)
+            return win32gui.GetForegroundWindow() == hwnd
         except Exception:
             LOGGER.debug("Windows refused a foreground transition", exc_info=True)
+            return False
 
     def swap(self) -> None:
-        if len(self.current_stack) < 2:
+        if len(self.cycle_handles) < 2:
             return
 
-        stack_members = {handle for handle, _ in self.current_stack}
-        ordered_handles = [
-            handle for handle, _ in get_visible_windows() if handle in stack_members
+        live_order = [handle for handle, _ in get_visible_windows()]
+        live_handles = set(live_order)
+        cycle_members = set(self.cycle_handles)
+        available_handles = [
+            handle for handle in self.cycle_handles if handle in live_handles
         ]
-        next_handle = next_window_in_z_order(ordered_handles)
-        if next_handle is not None:
-            self.set_foreground(next_handle)
+        if len(available_handles) < 2:
+            self.hide_button(reset_candidate=True)
+            return
+
+        if self.cycle_cursor not in live_handles:
+            self.cycle_cursor = next(
+                (
+                    handle
+                    for handle in live_order
+                    if handle in cycle_members
+                ),
+                None,
+            )
+        if self.cycle_cursor not in self.cycle_handles:
+            return
+
+        cursor_index = self.cycle_handles.index(self.cycle_cursor)
+        for offset in range(1, len(self.cycle_handles) + 1):
+            next_handle = self.cycle_handles[
+                (cursor_index + offset) % len(self.cycle_handles)
+            ]
+            if next_handle in live_handles:
+                if self.set_foreground(next_handle):
+                    self.cycle_cursor = next_handle
+                return
 
     def button_text(self, stack_size: int) -> str:
         label = f"⇄ {self.text['swap']}"
@@ -301,6 +330,16 @@ class WindowSwapApp:
         rect: tuple[int, int, int, int],
         stack: list[tuple[int, tuple[int, int, int, int]]],
     ) -> None:
+        stack_handles = list(dict.fromkeys(handle for handle, _ in stack if handle))
+        same_group = (
+            self.is_button_visible
+            and set(stack_handles) == set(self.cycle_handles)
+            and self.current_rect is not None
+            and rects_match(rect, self.current_rect, TOLERANCE)
+        )
+        if not same_group:
+            self.cycle_handles = stack_handles
+            self.cycle_cursor = stack_handles[0] if stack_handles else None
         self.current_stack = stack
         self.current_rect = rect
         self.button.configure(text=self.button_text(len(stack)))

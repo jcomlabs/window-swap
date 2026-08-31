@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0-beta.3 - 2026-08-31
+
+- Cycle through every detected window in a stable order instead of alternating only
+  between the first two entries after Windows updates the live z-order.
+- Skip windows that become unavailable during an active cycle.
+- Add three-window regression coverage for `A → B → C → A` behavior.
+
 ## 1.2.0-beta.2 - 2026-08-31
 
 - Add a compact localized status and settings panel from the tray menu.

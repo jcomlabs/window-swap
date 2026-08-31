@@ -16,8 +16,8 @@ VERSION = BUILD / "window-swap-version.txt"
 
 VERSION_INFO = """VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(1, 2, 0, 2),
-    prodvers=(1, 2, 0, 2),
+    filevers=(1, 2, 0, 3),
+    prodvers=(1, 2, 0, 3),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -30,12 +30,12 @@ VERSION_INFO = """VSVersionInfo(
       StringTable('040904B0', [
         StringStruct('CompanyName', 'JCOM Labs'),
         StringStruct('FileDescription', 'Window Swap'),
-        StringStruct('FileVersion', '1.2.0-beta.2'),
+        StringStruct('FileVersion', '1.2.0-beta.3'),
         StringStruct('InternalName', 'WindowSwap'),
         StringStruct('LegalCopyright', 'Copyright 2026 JC-OM'),
         StringStruct('OriginalFilename', 'window-swap.exe'),
         StringStruct('ProductName', 'Window Swap'),
-        StringStruct('ProductVersion', '1.2.0-beta.2')
+        StringStruct('ProductVersion', '1.2.0-beta.3')
       ])
     ]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
