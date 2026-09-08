@@ -5,7 +5,11 @@ on:
     tags: ["v*"]
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   windows:
@@ -15,27 +19,56 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
+          check-latest: true
           cache: pip
-      - run: python -m pip install -e ".[build]"
-      - run: python build_release.py
-      - name: Create SHA-256 digest
+      - run: python -m pip install uv==0.11.17
+      - name: Install the audited dependency lock
         shell: pwsh
         run: |
-          $hash = (Get-FileHash -Algorithm SHA256 dist/window-swap.exe).Hash.ToLowerInvariant()
-          "$hash  window-swap.exe" | Set-Content -Encoding ascii dist/window-swap.exe.sha256
-      - name: Publish GitHub Release
+          uv sync --frozen --extra dev --extra build --python "$env:pythonLocation/python.exe"
+      - run: uv run --no-sync python -m pytest
+      - run: uv run --no-sync python build_release.py
+      - run: uv run --no-sync python tools/package_release.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: window-swap-release
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            dist/window-swap.exe
+            dist/window-swap.exe.sha256
+            dist/window-swap-licenses.zip
+            dist/window-swap-licenses.zip.sha256
+
+  draft:
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: window-swap-release
+          path: dist
+      - name: Create a draft for artifact review
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
         run: |
-          $tag = $env:GITHUB_REF_NAME
+          $tag = $env:RELEASE_TAG
           $arguments = @(
             "release", "create", $tag,
             "dist/window-swap.exe",
             "dist/window-swap.exe.sha256",
+            "dist/window-swap-licenses.zip",
+            "dist/window-swap-licenses.zip.sha256",
+            "--repo", $env:RELEASE_REPOSITORY,
+            "--verify-tag", "--draft",
             "--title", $tag,
-            "--generate-notes"
+            "--notes", "Candidate built from the dependency lock. Audit the executable, checksums, and license/source companion before publishing this draft."
           )
           if ($tag.Contains("-")) {
             $arguments += "--prerelease"
