@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0-beta.4 - 2026-09-08
+
+- Exclude non-activating helper windows from stack counts and cycling, unless
+  they explicitly opt into the taskbar. Embedded WebView surfaces no longer
+  create an extra cycle entry for a single application window.
+- Preserve ordinary tool windows, explicit taskbar windows, and stable cycling
+  through three or more real windows.
+- Continue enumerating other windows if one closes during inspection.
+
 ## 1.2.0-beta.3 - 2026-08-31
 
 - Cycle through every detected window in a stable order instead of alternating only

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "window-swap"
-version = "1.2.0b3"
+version = "1.2.0b4"
 description = "A local Windows tray utility for cycling through snapped windows that share the same screen region."
 readme = "README.md"
 requires-python = ">=3.11"

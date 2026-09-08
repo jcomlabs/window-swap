@@ -39,7 +39,7 @@ LOGGER = logging.getLogger(__name__)
 TOLERANCE = 15
 CORNER_SIZE = 100
 APP_NAME = "WindowSwap"
-APP_VERSION = "1.2.0-beta.3"
+APP_VERSION = "1.2.0-beta.4"
 INSTANCE_MUTEX_NAME = r"Local\JCOMLabs.WindowSwap"
 ERROR_ALREADY_EXISTS = 183
 CHECK_INTERVAL_MS = 80
@@ -156,12 +156,22 @@ def get_visible_windows() -> list[tuple[int, tuple[int, int, int, int]]]:
     windows: list[tuple[int, tuple[int, int, int, int]]] = []
 
     def callback(hwnd: int, output: list[tuple[int, tuple[int, int, int, int]]]) -> bool:
-        if win32gui.IsWindowVisible(hwnd) and not win32gui.IsIconic(hwnd):
+        try:
+            if not win32gui.IsWindowVisible(hwnd) or win32gui.IsIconic(hwnd):
+                return True
+            style = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+            # Embedded rendering surfaces can look like separate top-level windows.
+            # Keep explicit taskbar windows and ordinary tool windows eligible.
+            if style & win32con.WS_EX_NOACTIVATE and not style & win32con.WS_EX_APPWINDOW:
+                return True
             title = win32gui.GetWindowText(hwnd)
             if title and title != "Program Manager":
                 rect = win32gui.GetWindowRect(hwnd)
                 if rect[2] > rect[0] and rect[3] > rect[1]:
                     output.append((hwnd, rect))
+        except win32gui.error:
+            # A window can close during enumeration; continue with the others.
+            pass
         return True
 
     win32gui.EnumWindows(callback, windows)
